@@ -2,21 +2,23 @@ package bz.rxla.audioplayer;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.List;
 
+import bz.rxla.audioplayer.client.MediaBrowserHelper;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -27,63 +29,16 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
  */
 public class AudioplayerPlugin implements MethodCallHandler {
     private static final String ID = "bz.rxla.flutter/audio";
+    private static final String TAG = AudioplayerPlugin.class.getSimpleName();
 
     private final MethodChannel channel;
     private final AudioManager am;
     private final Handler handler = new Handler();
     private MediaPlayer mediaPlayer;
     private Context context;
-    private boolean mIsBound = false;
 
-    private NotificationService mBoundService;
-
-    private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            // This is called when the connection with the service has
-            // been established, giving us the service object we can use
-            // to interact with the service.  Because we have bound to a
-            // explicit service that we know is running in our own
-            // process, we can cast its IBinder to a concrete class and
-            // directly access it.
-            mBoundService = ((NotificationService.LocalBinder) service).getService();
-
-            // Tell the user about this for our demo.
-            Toast.makeText(context,
-                    "local_service_connected",
-                    Toast.LENGTH_SHORT).show();
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            // This is called when the connection with the service has
-            // been unexpectedly disconnected -- that is, its process
-            // crashed. Because it is running in our same process, we
-            // should never see this happen.
-            mBoundService = null;
-            Toast.makeText(context,
-                    "local_service_disconnected",
-                    Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    void doBindService() {
-        // Establish a connection with the service.  We use an explicit
-        // class name because we want a specific service implementation
-        // that we know will be running in our own process (and thus
-        // won't be supporting component replacement by other
-        // applications).
-        context.bindService(new Intent(context, NotificationService.class),
-                mConnection,
-                Context.BIND_AUTO_CREATE);
-        mIsBound = true;
-    }
-
-    void doUnbindService() {
-        if (mIsBound) {
-            // Detach our existing connection.
-            context.unbindService(mConnection);
-            mIsBound = false;
-        }
-    }
+    private MediaBrowserHelper mMediaBrowserHelper;
+    private boolean mIsPlaying;
 
     public static void registerWith(Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -96,71 +51,101 @@ public class AudioplayerPlugin implements MethodCallHandler {
         context = registrar.context().getApplicationContext();
         this.am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
+        mMediaBrowserHelper = new MediaBrowserConnection(context);
+        mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (mIsPlaying) {
+                    mMediaBrowserHelper.getTransportControls().pause();
+                } else {
+                    mMediaBrowserHelper.getTransportControls().play();
+                }
+            }
+        }, 5000);
+
         ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
                 Toast.makeText(context,
                         "onActivityCreated",
                         Toast.LENGTH_SHORT).show();
+
+                Log.d(TAG, "onActivityCreated");
             }
 
             @Override
             public void onActivityStarted(Activity activity) {
+                mMediaBrowserHelper.onStart();
 
+                Log.d(TAG, "onActivityStarted");
             }
 
             @Override
             public void onActivityResumed(Activity activity) {
-
+//                if (mIsPlaying) {
+//                    mMediaBrowserHelper.getTransportControls().pause();
+//                } else {
+//                    mMediaBrowserHelper.getTransportControls().play();
+//                }
+                Log.d(TAG, "onActivityResumed");
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
 
+                Log.d(TAG, "onActivityPaused");
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
-
+                mMediaBrowserHelper.onStop();
+                Log.d(TAG, "onActivityStopped");
             }
 
             @Override
             public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
 
+                Log.d(TAG, "onActivitySaveInstanceState");
             }
 
             @Override
             public void onActivityDestroyed(Activity activity) {
-                doUnbindService();
                 Toast.makeText(context,
                         "onActivityDestroyed",
                         Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "onActivityDestroyed");
             }
         });
-        doBindService();
     }
 
     @Override
     public void onMethodCall(MethodCall call, MethodChannel.Result response) {
         switch (call.method) {
             case "play":
+                Log.d(TAG, "play");
                 play(call.argument("url").toString());
                 response.success(null);
                 break;
             case "pause":
+                Log.d(TAG, "pause");
                 pause();
                 response.success(null);
                 break;
             case "stop":
+                Log.d(TAG, "stop");
                 stop();
                 response.success(null);
                 break;
             case "seek":
+                Log.d(TAG, "seek");
                 double position = call.arguments();
                 seek(position);
                 response.success(null);
                 break;
             case "mute":
+                Log.d(TAG, "mute");
                 Boolean muted = call.arguments();
                 mute(muted);
                 response.success(null);
@@ -259,4 +244,45 @@ public class AudioplayerPlugin implements MethodCallHandler {
             }
         }
     };
+
+    /**
+     * Implementation of the {@link MediaControllerCompat.Callback} methods we're interested in.
+     * <p>
+     * Here would also be where one could override
+     * {@code onQueueChanged(List<MediaSessionCompat.QueueItem> queue)} to get informed when items
+     * are added or removed from the queue. We don't do this here in order to keep the UI
+     * simple.
+     */
+    private class MediaBrowserListener extends MediaControllerCompat.Callback {
+        @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
+            mIsPlaying = playbackState != null &&
+                    playbackState.getState() == PlaybackStateCompat.STATE_PLAYING;
+//            mMediaControlsImage.setPressed(mIsPlaying);
+        }
+
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat mediaMetadata) {
+            if (mediaMetadata == null) {
+                return;
+            }
+//            mTitleTextView.setText(
+//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
+//            mArtistTextView.setText(
+//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST));
+//            mAlbumArt.setImageBitmap(MusicLibrary.getAlbumBitmap(
+//                    context,
+//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)));
+        }
+
+        @Override
+        public void onSessionDestroyed() {
+            super.onSessionDestroyed();
+        }
+
+        @Override
+        public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
+            super.onQueueChanged(queue);
+        }
+    }
 }
