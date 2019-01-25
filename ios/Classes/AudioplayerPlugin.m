@@ -54,17 +54,17 @@ MPRemoteCommandCenter *commandCenter;
     commandCenter = [MPRemoteCommandCenter sharedCommandCenter];
     
     [commandCenter.pauseCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
-
-        [player pause];
-        isPlaying = false;
-        [_channel invokeMethod:@"audio.onSELPause" arguments:nil];
+    
+        [instance pause];
+        CMTime duration = [[player currentItem] currentTime];
+        [instance setPlaybackInfo:(int)CMTimeGetSeconds(duration)];
         
         return MPRemoteCommandHandlerStatusSuccess;
     } ];
     
     [commandCenter.playCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {
         CMTime duration = [[player currentItem] duration];
-        [[player currentItem] addObserver:self
+        [[player currentItem] addObserver:instance
                                forKeyPath:@"player.currentItem.status"
                                   options:0
                                   context:nil];
@@ -72,12 +72,13 @@ MPRemoteCommandCenter *commandCenter;
         if (CMTimeGetSeconds(duration) > 0) {
             int mseconds= CMTimeGetSeconds(duration)*1000;
             [_channel invokeMethod:@"audio.onStart" arguments:@(mseconds)];
+        } else {
+           [_channel invokeMethod:@"audio.onContinue" arguments:nil];
         }
         
         [player play];
         isPlaying = true;
-        [_channel invokeMethod:@"audio.onContinue" arguments:nil];
-
+        
         return MPRemoteCommandHandlerStatusSuccess;
     } ];
     
@@ -248,9 +249,9 @@ MPRemoteCommandCenter *commandCenter;
                                                                       }];
         [observers addObject:anobserver];
 
-        if (player) {
-            [player replaceCurrentItemWithPlayerItem:playerItem];
-        } else {
+//        if (player) {
+//            [player replaceCurrentItemWithPlayerItem:playerItem];
+//        } else {
             player = [[AVPlayer alloc] initWithPlayerItem:playerItem];
             // Stream player position.
             // This call is only active when the player is active so there's no need to
@@ -260,7 +261,7 @@ MPRemoteCommandCenter *commandCenter;
                 [self onTimeInterval:time];
             }];
             [timeobservers addObject:timeObserver];
-        }
+//        }
         
         // is sound ready
         [[player currentItem] addObserver:self
