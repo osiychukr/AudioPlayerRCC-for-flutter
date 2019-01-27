@@ -62,17 +62,17 @@ public class MusicLibrary {
                 "the_coldest_shoulder.mp3",
                 R.drawable.album_youtube_audio_library_rock_2,
                 "album_youtube_audio_library_rock_2");
-//        createMediaMetadataCompat(
-//                "test_id",
-//                "Test title",
-//                "Test Artist",
-//                "Test album",
-//                "Rock",
-//                160,
-//                TimeUnit.SECONDS,
-//                "http://www.rxlabz.com/labz/audio2.mp3",
-//                R.drawable.album_youtube_audio_library_rock_2,
-//                "album_youtube_audio_library_rock_2");
+        createMediaMetadataCompat(
+                "test_id",
+                "Test title",
+                "Test Artist",
+                "Test album",
+                "Rock",
+                160,
+                TimeUnit.SECONDS,
+                "http://www.rxlabz.com/labz/audio2.mp3",
+                R.drawable.album_youtube_audio_library_rock_2,
+                "album_youtube_audio_library_rock_2");
     }
 
     public static String getRoot() {

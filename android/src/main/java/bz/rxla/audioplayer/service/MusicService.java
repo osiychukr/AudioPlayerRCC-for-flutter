@@ -18,6 +18,7 @@ package bz.rxla.audioplayer.service;
 
 import android.app.Notification;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -146,6 +147,12 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
 
         @Override
+        public void onPlayFromUri(Uri uri, Bundle extras) {
+            mPlayback.playFromUrl(uri.toString());
+            Log.d(TAG, "onPlayFromUri: MediaSession active - " + uri.toString());
+        }
+
+        @Override
         public void onPause() {
             mPlayback.pause();
         }
@@ -211,9 +218,13 @@ public class MusicService extends MediaBrowserServiceCompat {
         class ServiceManager {
 
             private void moveServiceToStartedState(PlaybackStateCompat state) {
+//                Notification notification =
+//                        mMediaNotificationManager.getNotification(
+//                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                mData, state, getSessionToken());
 
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
@@ -227,9 +238,13 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             private void updateNotificationForPause(PlaybackStateCompat state) {
                 stopForeground(false);
+//                Notification notification =
+//                        mMediaNotificationManager.getNotification(
+//                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                mData, state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }
@@ -243,4 +258,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return super.onStartCommand(intent, flags, startId);
+    }
 }

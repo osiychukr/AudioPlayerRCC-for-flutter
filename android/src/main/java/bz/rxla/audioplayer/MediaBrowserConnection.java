@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.util.Log;
 
 import java.util.List;
 
@@ -15,6 +16,9 @@ import bz.rxla.audioplayer.service.MusicService;
  * and implement our app specific desires.
  */
 class MediaBrowserConnection extends MediaBrowserHelper {
+
+    private static final String TAG = MediaBrowserConnection.class.getSimpleName();
+
     public MediaBrowserConnection(Context context) {
         super(context, MusicService.class);
     }
@@ -22,6 +26,7 @@ class MediaBrowserConnection extends MediaBrowserHelper {
     @Override
     protected void onConnected(@NonNull MediaControllerCompat mediaController) {
 //            mSeekBarAudio.setMediaController(mediaController);
+        Log.d(TAG, "onConnected");
     }
 
     @Override

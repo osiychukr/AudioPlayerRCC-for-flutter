@@ -22,6 +22,9 @@ import android.media.MediaPlayer;
 import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
+
+import java.io.IOException;
 
 import bz.rxla.audioplayer.service.PlaybackInfoListener;
 import bz.rxla.audioplayer.service.PlayerAdapter;
@@ -85,6 +88,13 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         playFile(MusicLibrary.getMusicFilename(mediaId));
     }
 
+    // Implements PlaybackControl.
+    @Override
+    public void playFromUrl(String url) {
+//        mCurrentMedia = metadata;
+        playUrl(url);
+    }
+
     @Override
     public MediaMetadataCompat getCurrentMedia() {
         return mCurrentMedia;
@@ -120,6 +130,78 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         } catch (Exception e) {
             throw new RuntimeException("Failed to open file: " + mFilename, e);
         }
+
+        try {
+            mMediaPlayer.prepare();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to open file: " + mFilename, e);
+        }
+
+        play();
+    }
+
+    private void playUrl(String url) {
+        boolean mediaChanged = (mFilename == null || !url.equals(mFilename));
+        if (mCurrentMediaPlayedToCompletion) {
+            // Last audio file was played to completion, the resourceId hasn't changed, but the
+            // player was released, so force a reload of the media file for playback.
+            mediaChanged = true;
+            mCurrentMediaPlayedToCompletion = false;
+        }
+        if (!mediaChanged) {
+            if (!isPlaying()) {
+                play();
+            }
+            return;
+        } else {
+            release();
+        }
+
+        mFilename = url;
+
+        initializeMediaPlayer();
+
+        try {
+            mMediaPlayer.setDataSource(url);
+        } catch (IOException e) {
+            return;
+        }
+
+//        mMediaPlayer.prepareAsync();
+
+//        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+//            @Override
+//            public void onPrepared(MediaPlayer mp) {
+//                mMediaPlayer.start();
+//                channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
+//            }
+//        });
+//
+//        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//            @Override
+//            public void onCompletion(MediaPlayer mp) {
+//                stop();
+//                channel.invokeMethod("audio.onComplete", null);
+//            }
+//        });
+//
+//        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+//            @Override
+//            public boolean onError(MediaPlayer mp, int what, int extra) {
+//                channel.invokeMethod("audio.onError", String.format("{\"what\":%d,\"extra\":%d}", what, extra));
+//                return true;
+//            }
+//        });
+//
+//        try {
+//            AssetFileDescriptor assetFileDescriptor = mContext.getAssets().openFd(mFilename);
+//            mMediaPlayer.setDataSource(
+//                    assetFileDescriptor.getFileDescriptor(),
+//                    assetFileDescriptor.getStartOffset(),
+//                    assetFileDescriptor.getLength());
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to open file: " + mFilename, e);
+//        }
 
         try {
             mMediaPlayer.prepare();

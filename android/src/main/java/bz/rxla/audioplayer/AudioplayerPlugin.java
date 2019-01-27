@@ -5,6 +5,7 @@ import android.app.Application;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -53,17 +54,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
         mMediaBrowserHelper = new MediaBrowserConnection(context);
         mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (mIsPlaying) {
-                    mMediaBrowserHelper.getTransportControls().pause();
-                } else {
-                    mMediaBrowserHelper.getTransportControls().play();
-                }
-            }
-        }, 5000);
 
         ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             @Override
@@ -125,12 +115,26 @@ public class AudioplayerPlugin implements MethodCallHandler {
         switch (call.method) {
             case "play":
                 Log.d(TAG, "play");
-                play(call.argument("url").toString());
+//                play(call.argument("url").toString());
+
+//                if (mIsPlaying) {
+//                    mMediaBrowserHelper.getTransportControls().pause();
+//                } else {
+//                    mMediaBrowserHelper.getTransportControls().play();
+//                }
+
+                mMediaBrowserHelper.getTransportControls().playFromUri(Uri.parse(call.argument("url").toString()), null);
+                channel.invokeMethod("audio.onStart", 0);
+
                 response.success(null);
                 break;
             case "pause":
                 Log.d(TAG, "pause");
-                pause();
+//                pause();
+
+                mMediaBrowserHelper.getTransportControls().pause();
+                channel.invokeMethod("audio.onPause", true);
+
                 response.success(null);
                 break;
             case "stop":
