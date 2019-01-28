@@ -23,14 +23,14 @@ import android.graphics.BitmapFactory;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 
-import bz.rxla.audioplayer.BuildConfig;
-import bz.rxla.audioplayer.R;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
+import bz.rxla.audioplayer.BuildConfig;
+import bz.rxla.audioplayer.R;
 
 
 public class MusicLibrary {
@@ -40,28 +40,28 @@ public class MusicLibrary {
     private static final HashMap<String, String> musicFileName = new HashMap<>();
 
     static {
-        createMediaMetadataCompat(
-                "Jazz_In_Paris",
-                "Jazz in Paris",
-                "Media Right Productions",
-                "Jazz & Blues",
-                "Jazz",
-                103,
-                TimeUnit.SECONDS,
-                "jazz_in_paris.mp3",
-                R.drawable.album_jazz_blues,
-                "album_jazz_blues");
-        createMediaMetadataCompat(
-                "The_Coldest_Shoulder",
-                "The Coldest Shoulder",
-                "The 126ers",
-                "Youtube Audio Library Rock 2",
-                "Rock",
-                160,
-                TimeUnit.SECONDS,
-                "the_coldest_shoulder.mp3",
-                R.drawable.album_youtube_audio_library_rock_2,
-                "album_youtube_audio_library_rock_2");
+//        createMediaMetadataCompat(
+//                "Jazz_In_Paris",
+//                "Jazz in Paris",
+//                "Media Right Productions",
+//                "Jazz & Blues",
+//                "Jazz",
+//                103,
+//                TimeUnit.SECONDS,
+//                "jazz_in_paris.mp3",
+//                R.drawable.album_jazz_blues,
+//                "album_jazz_blues");
+//        createMediaMetadataCompat(
+//                "The_Coldest_Shoulder",
+//                "The Coldest Shoulder",
+//                "The 126ers",
+//                "Youtube Audio Library Rock 2",
+//                "Rock",
+//                160,
+//                TimeUnit.SECONDS,
+//                "the_coldest_shoulder.mp3",
+//                R.drawable.album_youtube_audio_library_rock_2,
+//                "album_youtube_audio_library_rock_2");
         createMediaMetadataCompat(
                 "test_id",
                 "Test title",
@@ -149,7 +149,7 @@ public class MusicLibrary {
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
-                                 TimeUnit.MILLISECONDS.convert(duration, durationUnit))
+                                TimeUnit.MILLISECONDS.convert(duration, durationUnit))
                         .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
                         .putString(
                                 MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI,

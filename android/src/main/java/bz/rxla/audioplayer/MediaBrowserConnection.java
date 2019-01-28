@@ -33,6 +33,7 @@ class MediaBrowserConnection extends MediaBrowserHelper {
     protected void onChildrenLoaded(@NonNull String parentId,
                                     @NonNull List<MediaBrowserCompat.MediaItem> children) {
         super.onChildrenLoaded(parentId, children);
+        Log.d(TAG, "onChildrenLoaded");
 
         final MediaControllerCompat mediaController = getMediaController();
 

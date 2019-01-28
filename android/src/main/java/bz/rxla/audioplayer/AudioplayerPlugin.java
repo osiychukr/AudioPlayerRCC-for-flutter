@@ -2,13 +2,17 @@ package bz.rxla.audioplayer;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -20,6 +24,7 @@ import java.io.IOException;
 import java.util.List;
 
 import bz.rxla.audioplayer.client.MediaBrowserHelper;
+import bz.rxla.audioplayer.service.MusicService;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -40,6 +45,23 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     private MediaBrowserHelper mMediaBrowserHelper;
     private boolean mIsPlaying;
+
+    private BroadcastReceiver skipNextReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "skipNextReceiver onReceive");
+
+
+        }
+    };
+
+    private BroadcastReceiver skipPreviousReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "skipPreviousReceiver onReceive");
+            channel.invokeMethod("audio.onPrevious", null);
+        }
+    };
 
     public static void registerWith(Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
@@ -69,6 +91,12 @@ public class AudioplayerPlugin implements MethodCallHandler {
             public void onActivityStarted(Activity activity) {
                 mMediaBrowserHelper.onStart();
 
+                LocalBroadcastManager.getInstance(context).registerReceiver(
+                        skipNextReceiver, new IntentFilter(MusicService.SKIP_NEXT_ACTION));
+
+                LocalBroadcastManager.getInstance(context).registerReceiver(
+                        skipPreviousReceiver, new IntentFilter(MusicService.SKIP_PREVIOUS_ACTION));
+
                 Log.d(TAG, "onActivityStarted");
             }
 
@@ -91,6 +119,13 @@ public class AudioplayerPlugin implements MethodCallHandler {
             @Override
             public void onActivityStopped(Activity activity) {
                 mMediaBrowserHelper.onStop();
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        skipNextReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        skipPreviousReceiver);
+
                 Log.d(TAG, "onActivityStopped");
             }
 
@@ -124,7 +159,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
 //                }
 
                 mMediaBrowserHelper.getTransportControls().playFromUri(Uri.parse(call.argument("url").toString()), null);
-                channel.invokeMethod("audio.onStart", 0);
+
 
                 response.success(null);
                 break;
@@ -133,7 +168,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
 //                pause();
 
                 mMediaBrowserHelper.getTransportControls().pause();
-                channel.invokeMethod("audio.onPause", true);
 
                 response.success(null);
                 break;
@@ -260,13 +294,32 @@ public class AudioplayerPlugin implements MethodCallHandler {
     private class MediaBrowserListener extends MediaControllerCompat.Callback {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
-            mIsPlaying = playbackState != null &&
-                    playbackState.getState() == PlaybackStateCompat.STATE_PLAYING;
+            Log.d(TAG, "onPlaybackStateChanged");
 //            mMediaControlsImage.setPressed(mIsPlaying);
+
+            if (playbackState != null) {
+                switch (playbackState.getState()) {
+                    case PlaybackStateCompat.STATE_PLAYING:
+                        mIsPlaying = true;
+                        channel.invokeMethod("audio.onStart", 0);
+                        Log.d(TAG, "audio.onStart");
+                        break;
+                    case PlaybackStateCompat.STATE_PAUSED:
+                        mIsPlaying = false;
+                        channel.invokeMethod("audio.onPause", true);
+                        Log.d(TAG, "audio.onPause");
+                        break;
+                    case PlaybackStateCompat.STATE_STOPPED:
+                        mIsPlaying = false;
+                        break;
+                }
+            }
+
         }
 
         @Override
         public void onMetadataChanged(MediaMetadataCompat mediaMetadata) {
+            Log.d(TAG, "onMetadataChanged");
             if (mediaMetadata == null) {
                 return;
             }
@@ -281,11 +334,13 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
         @Override
         public void onSessionDestroyed() {
+            Log.d(TAG, "onSessionDestroyed");
             super.onSessionDestroyed();
         }
 
         @Override
         public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
+            Log.d(TAG, "onQueueChanged");
             super.onQueueChanged(queue);
         }
     }

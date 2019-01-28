@@ -19,9 +19,12 @@ package bz.rxla.audioplayer.service;
 import android.app.Notification;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -40,6 +43,9 @@ import java.util.List;
 public class MusicService extends MediaBrowserServiceCompat {
 
     private static final String TAG = MusicService.class.getSimpleName();
+
+    public static final String SKIP_NEXT_ACTION = "SKIP_NEXT_ACTION";
+    public static final String SKIP_PREVIOUS_ACTION = "SKIP_PREVIOUS_ACTION";
 
     private MediaSessionCompat mSession;
     private PlayerAdapter mPlayback;
@@ -165,16 +171,24 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSkipToNext() {
-            mQueueIndex = (++mQueueIndex % mPlaylist.size());
-            mPreparedMedia = null;
-            onPlay();
+//            mQueueIndex = (++mQueueIndex % mPlaylist.size());
+//            mPreparedMedia = null;
+//            onPlay();
+
+            Intent intent = new Intent(SKIP_NEXT_ACTION);
+//            intent.putExtra(SKIP_NEXT_ACTION, args[0].toString());
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         }
 
         @Override
         public void onSkipToPrevious() {
-            mQueueIndex = mQueueIndex > 0 ? mQueueIndex - 1 : mPlaylist.size() - 1;
-            mPreparedMedia = null;
-            onPlay();
+//            mQueueIndex = mQueueIndex > 0 ? mQueueIndex - 1 : mPlaylist.size() - 1;
+//            mPreparedMedia = null;
+//            onPlay();
+
+            Intent intent = new Intent(SKIP_PREVIOUS_ACTION);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
         }
 
         @Override
