@@ -52,6 +52,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     private MediaNotificationManager mMediaNotificationManager;
     private MediaSessionCallback mCallback;
     private boolean mServiceInStartedState;
+    private Uri uri = null;
 
     @Override
     public void onCreate() {
@@ -139,21 +140,26 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPlay() {
-            if (!isReadyToPlay()) {
-                // Nothing to play.
-                return;
-            }
+//            if (!isReadyToPlay()) {
+//                // Nothing to play.
+//                return;
+//            }
+//
+//            if (mPreparedMedia == null) {
+//                onPrepare();
+//            }
+//
+//            mPlayback.playFromMedia(mPreparedMedia);
 
-            if (mPreparedMedia == null) {
-                onPrepare();
+            if (uri != null) {
+                mPlayback.playFromUrl(uri.toString());
             }
-
-            mPlayback.playFromMedia(mPreparedMedia);
             Log.d(TAG, "onPlayFromMediaId: MediaSession active");
         }
 
         @Override
         public void onPlayFromUri(Uri uri, Bundle extras) {
+            MusicService.this.uri = uri;
             mPlayback.playFromUrl(uri.toString());
             Log.d(TAG, "onPlayFromUri: MediaSession active - " + uri.toString());
         }

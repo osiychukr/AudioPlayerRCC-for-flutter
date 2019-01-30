@@ -50,8 +50,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "skipNextReceiver onReceive");
-
-
+            mMediaBrowserHelper.getTransportControls().pause();
+            channel.invokeMethod("audio.onComplete", null);
         }
     };
 
@@ -147,7 +147,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     @Override
     public void onMethodCall(MethodCall call, MethodChannel.Result response) {
-        switch (call.method) {
+        String method = call.method;
+        Log.i(TAG, "call.method = " + method);
+        switch (method) {
             case "play":
                 Log.d(TAG, "play");
 //                play(call.argument("url").toString());
@@ -171,6 +173,28 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 response.success(null);
                 break;
+            case "setInfo":
+                Log.d(TAG, "setInfo");
+
+                String author = call.argument("author");
+                String name = call.argument("name");
+                String imageUrl = call.argument("imageUrl");
+                int duration = call.argument("duration");
+
+                Log.d(TAG, "setInfo " + author + name + imageUrl + duration);
+
+                response.success(null);
+                break;
+            case "setPlaybackInfo":
+                Log.d(TAG, "setPlaybackInfo");
+
+                response.success(null);
+                break;
+            case "setDuration":
+                Log.d(TAG, "setDuration");
+                int duration2 = call.argument("duration");
+                response.success(null);
+                break;
             case "stop":
                 Log.d(TAG, "stop");
                 stop();
@@ -179,7 +203,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
             case "seek":
                 Log.d(TAG, "seek");
                 double position = call.arguments();
-                seek(position);
+//                seek(position);
+
+                mMediaBrowserHelper.getTransportControls().seekTo((int) (position * 1000));
                 response.success(null);
                 break;
             case "mute":
