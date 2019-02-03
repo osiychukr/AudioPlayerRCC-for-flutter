@@ -115,14 +115,16 @@ public class MediaNotificationManager {
         boolean isPlaying = state.getState() == PlaybackStateCompat.STATE_PLAYING;
         MediaDescriptionCompat description = metadata.getDescription();
         NotificationCompat.Builder builder =
-                buildNotification(state, token, isPlaying, description);
+                buildNotification(state, token, isPlaying, metadata);
         return builder.build();
     }
 
     private NotificationCompat.Builder buildNotification(@NonNull PlaybackStateCompat state,
                                                          MediaSessionCompat.Token token,
                                                          boolean isPlaying,
-                                                         MediaDescriptionCompat description) {
+                                                         MediaMetadataCompat metadata) {
+
+        MediaDescriptionCompat description = metadata.getDescription();
 
         // Create the (mandatory) notification channel when running on Android Oreo.
         if (isAndroidOOrHigher()) {
@@ -148,7 +150,8 @@ public class MediaNotificationManager {
                 .setContentTitle(description.getTitle())
                 // Subtitle - Usually Artist name.
                 .setContentText(description.getSubtitle())
-                .setLargeIcon(MusicLibrary.getAlbumBitmap(mService, description.getMediaId()))
+//                .setLargeIcon(MusicLibrary.getAlbumBitmap(mService, description.getMediaId()))
+                .setLargeIcon(metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART))
                 // When notification is deleted (when playback is paused and notification can be
                 // deleted) fire MediaButtonPendingIntent with ACTION_STOP.
                 .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(

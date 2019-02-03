@@ -19,6 +19,8 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
+import bz.rxla.audioplayer.service.MusicService;
+
 public class MediaNotificationManager {
 
     public static final int NOTIFICATION_ID = 412;
@@ -27,7 +29,7 @@ public class MediaNotificationManager {
     private static final String CHANNEL_ID = "com.example.android.musicplayer.channel";
     private static final int REQUEST_CODE = 501;
 
-    private final NotificationService mService;
+    private final MusicService mService;
 
     private final NotificationCompat.Action mPlayAction;
     private final NotificationCompat.Action mPauseAction;
@@ -35,7 +37,7 @@ public class MediaNotificationManager {
     private final NotificationCompat.Action mPrevAction;
     private final NotificationManager mNotificationManager;
 
-    public MediaNotificationManager(NotificationService service) {
+    public MediaNotificationManager(MusicService service) {
         mService = service;
 
         mNotificationManager =

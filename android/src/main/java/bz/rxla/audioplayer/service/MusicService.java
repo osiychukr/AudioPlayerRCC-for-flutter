@@ -17,12 +17,15 @@
 package bz.rxla.audioplayer.service;
 
 import android.app.Notification;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Binder;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.MediaBrowserCompat;
@@ -33,12 +36,18 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
-import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
-import bz.rxla.audioplayer.service.notifications.MediaNotificationManager;
-import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import bz.rxla.audioplayer.models.AudioInfo;
+import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
+import bz.rxla.audioplayer.service.notifications.MediaNotificationManager;
+import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
 
 public class MusicService extends MediaBrowserServiceCompat {
 
@@ -46,6 +55,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     public static final String SKIP_NEXT_ACTION = "SKIP_NEXT_ACTION";
     public static final String SKIP_PREVIOUS_ACTION = "SKIP_PREVIOUS_ACTION";
+    public static final String SET_INFO_ACTION = "SKIP_PREVIOUS_ACTION";
+    public static final String AUDIO_INFO_KEY = "AUDIO_INFO_KEY";
 
     private MediaSessionCompat mSession;
     private PlayerAdapter mPlayback;
@@ -53,6 +64,16 @@ public class MusicService extends MediaBrowserServiceCompat {
     private MediaSessionCallback mCallback;
     private boolean mServiceInStartedState;
     private Uri uri = null;
+
+    private AudioInfo audioInfo = null;
+
+    private BroadcastReceiver setInfoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "setInfoReceiver onReceive");
+            audioInfo = intent.getParcelableExtra(AUDIO_INFO_KEY);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -64,13 +85,17 @@ public class MusicService extends MediaBrowserServiceCompat {
         mSession.setCallback(mCallback);
         mSession.setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+                        MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
+                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         setSessionToken(mSession.getSessionToken());
 
         mMediaNotificationManager = new MediaNotificationManager(this);
 
         mPlayback = new MediaPlayerAdapter(this, new MediaPlayerListener());
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(
+                setInfoReceiver, new IntentFilter(SET_INFO_ACTION));
+
         Log.d(TAG, "onCreate: MusicService creating MediaSession, and MediaNotificationManager");
     }
 
@@ -85,6 +110,10 @@ public class MusicService extends MediaBrowserServiceCompat {
         mMediaNotificationManager.onDestroy();
         mPlayback.stop();
         mSession.release();
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(
+                setInfoReceiver);
+
         Log.d(TAG, "onDestroy: MediaPlayerAdapter stopped, and MediaSession released");
     }
 
@@ -124,13 +153,40 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPrepare() {
-            if (mQueueIndex < 0 && mPlaylist.isEmpty()) {
-                // Nothing to play.
+//            if (mQueueIndex < 0 && mPlaylist.isEmpty()) {
+//                // Nothing to play.
+//                return;
+//            }
+//
+//            final String mediaId = mPlaylist.get(mQueueIndex).getDescription().getMediaId();
+//            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
+//            mSession.setMetadata(mPreparedMedia);
+//
+//            if (!mSession.isActive()) {
+//                mSession.setActive(true);
+//            }
+
+            if (audioInfo == null) {
                 return;
             }
+//            Glide.with(MusicService.this)
+//                    .asBitmap()
+//                    .load(audioInfo.imageUrl)
+//                    .into(new SimpleTarget<Bitmap>(50, 50) {
+//                        @Override
+//                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+//                            audioInfo.bitmap = resource;
+//                            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, audioInfo);
+//                            mSession.setMetadata(mPreparedMedia);
+//
+//                            if (!mSession.isActive()) {
+//                                mSession.setActive(true);
+//                            }
+//                        }
+//                    });
 
-            final String mediaId = mPlaylist.get(mQueueIndex).getDescription().getMediaId();
-            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
+//            audioInfo.bitmap = resource;
+            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, audioInfo);
             mSession.setMetadata(mPreparedMedia);
 
             if (!mSession.isActive()) {
@@ -140,19 +196,19 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPlay() {
-//            if (!isReadyToPlay()) {
-//                // Nothing to play.
-//                return;
-//            }
-//
-//            if (mPreparedMedia == null) {
-//                onPrepare();
-//            }
+            if (!isReadyToPlay()) {
+                // Nothing to play.
+                return;
+            }
+
+            if (mPreparedMedia == null) {
+                onPrepare();
+            }
 //
 //            mPlayback.playFromMedia(mPreparedMedia);
 
             if (uri != null) {
-                mPlayback.playFromUrl(uri.toString());
+                mPlayback.playFromUrl(uri.toString(), mPreparedMedia);
             }
             Log.d(TAG, "onPlayFromMediaId: MediaSession active");
         }
@@ -160,7 +216,16 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlayFromUri(Uri uri, Bundle extras) {
             MusicService.this.uri = uri;
-            mPlayback.playFromUrl(uri.toString());
+            if (!isReadyToPlay()) {
+                // Nothing to play.
+                return;
+            }
+
+            if (mPreparedMedia == null) {
+                onPrepare();
+            }
+
+            mPlayback.playFromUrl(uri.toString(), mPreparedMedia);
             Log.d(TAG, "onPlayFromUri: MediaSession active - " + uri.toString());
         }
 
@@ -203,7 +268,8 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
 
         private boolean isReadyToPlay() {
-            return (!mPlaylist.isEmpty());
+//            return (!mPlaylist.isEmpty());
+            return (uri != null);
         }
     }
 
@@ -244,7 +310,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mData, state, getSessionToken());
+                                mPlayback.getCurrentMedia(), state, getSessionToken());
 
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
@@ -264,7 +330,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mData, state, getSessionToken());
+                                mPlayback.getCurrentMedia(), state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }

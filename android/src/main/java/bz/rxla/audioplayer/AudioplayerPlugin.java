@@ -6,13 +6,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -20,10 +24,15 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+
 import java.io.IOException;
 import java.util.List;
 
 import bz.rxla.audioplayer.client.MediaBrowserHelper;
+import bz.rxla.audioplayer.models.AudioInfo;
 import bz.rxla.audioplayer.service.MusicService;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -45,6 +54,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     private MediaBrowserHelper mMediaBrowserHelper;
     private boolean mIsPlaying;
+    private AudioInfo audioInfo = null;
 
     private BroadcastReceiver skipNextReceiver = new BroadcastReceiver() {
         @Override
@@ -145,6 +155,24 @@ public class AudioplayerPlugin implements MethodCallHandler {
         });
     }
 
+    private void setTestInfo() {
+        audioInfo = new AudioInfo("name", "author", "https://wallpaperbrowse.com/media/images/3848765-wallpaper-images-download.jpg", 160);
+
+        Glide.with(context)
+                .asBitmap()
+                .load(audioInfo.imageUrl)
+                .into(new SimpleTarget<Bitmap>(50, 50) {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        audioInfo.bitmap = resource;
+                        Intent intent = new Intent(MusicService.SET_INFO_ACTION);
+                        intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
+                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                    }
+                });
+
+    }
+
     @Override
     public void onMethodCall(MethodCall call, MethodChannel.Result response) {
         String method = call.method;
@@ -180,6 +208,24 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 String name = call.argument("name");
                 String imageUrl = call.argument("imageUrl");
                 int duration = call.argument("duration");
+                audioInfo = new AudioInfo(name, author, imageUrl, duration);
+
+                Glide.with(context)
+                        .asBitmap()
+                        .load(audioInfo.imageUrl)
+                        .into(new SimpleTarget<Bitmap>((int) Utils.toDp(100, context), (int) Utils.toDp(100, context)) {
+                            @Override
+                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                audioInfo.bitmap = resource;
+                                Intent intent = new Intent(MusicService.SET_INFO_ACTION);
+                                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
+                        });
+
+                Intent intent = new Intent(MusicService.SET_INFO_ACTION);
+                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
                 Log.d(TAG, "setInfo " + author + name + imageUrl + duration);
 
@@ -368,6 +414,43 @@ public class AudioplayerPlugin implements MethodCallHandler {
         public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
             Log.d(TAG, "onQueueChanged");
             super.onQueueChanged(queue);
+        }
+    }
+
+    /**
+     * Customize the connection to our {@link android.support.v4.media.MediaBrowserServiceCompat}
+     * and implement our app specific desires.
+     */
+    class MediaBrowserConnection extends MediaBrowserHelper {
+
+        private final String TAG = MediaBrowserConnection.class.getSimpleName();
+
+        public MediaBrowserConnection(Context context) {
+            super(context, MusicService.class);
+        }
+
+        @Override
+        protected void onConnected(@NonNull MediaControllerCompat mediaController) {
+//            mSeekBarAudio.setMediaController(mediaController);
+            Log.d(TAG, "onConnected");
+//            setTestInfo();
+        }
+
+        @Override
+        protected void onChildrenLoaded(@NonNull String parentId,
+                                        @NonNull List<MediaBrowserCompat.MediaItem> children) {
+            super.onChildrenLoaded(parentId, children);
+            Log.d(TAG, "onChildrenLoaded");
+
+            final MediaControllerCompat mediaController = getMediaController();
+
+            // Queue up all media items for this simple sample.
+            for (final MediaBrowserCompat.MediaItem mediaItem : children) {
+                mediaController.addQueueItem(mediaItem.getDescription());
+            }
+
+            // Call prepare now so pressing play just works.
+            mediaController.getTransportControls().prepare();
         }
     }
 }

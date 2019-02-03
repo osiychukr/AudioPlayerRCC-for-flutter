@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import bz.rxla.audioplayer.BuildConfig;
 import bz.rxla.audioplayer.R;
+import bz.rxla.audioplayer.models.AudioInfo;
 
 
 public class MusicLibrary {
@@ -128,6 +129,20 @@ public class MusicLibrary {
                 MediaMetadataCompat.METADATA_KEY_DURATION,
                 metadataWithoutBitmap.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
         builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
+        return builder.build();
+    }
+
+    public static MediaMetadataCompat getMetadata(Context context, AudioInfo audioInfo) {
+        // Since MediaMetadataCompat is immutable, we need to create a copy to set the album art.
+        // We don't set it initially on all items so that they don't take unnecessary memory.
+        MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
+
+        builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, audioInfo.name);
+        builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, audioInfo.title);
+        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name);
+        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audioInfo.duration);
+        builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap);
+
         return builder.build();
     }
 

@@ -90,8 +90,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
 
     // Implements PlaybackControl.
     @Override
-    public void playFromUrl(String url) {
-//        mCurrentMedia = metadata;
+    public void playFromUrl(String url, MediaMetadataCompat metadata) {
+        mCurrentMedia = metadata;
         playUrl(url);
     }
 
