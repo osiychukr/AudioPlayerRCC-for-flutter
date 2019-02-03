@@ -268,6 +268,7 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
             mMediaPlayer.start();
             setNewState(PlaybackStateCompat.STATE_PLAYING);
         }
+        handler.post(sendData);
     }
 
     @Override
@@ -276,6 +277,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
             mMediaPlayer.pause();
             setNewState(PlaybackStateCompat.STATE_PAUSED);
         }
+
+        handler.removeCallbacks(sendData);
     }
 
     // This is the main reducer for the player state machine.
