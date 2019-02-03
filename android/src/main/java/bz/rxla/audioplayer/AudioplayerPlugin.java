@@ -34,6 +34,8 @@ import java.util.List;
 import bz.rxla.audioplayer.client.MediaBrowserHelper;
 import bz.rxla.audioplayer.models.AudioInfo;
 import bz.rxla.audioplayer.service.MusicService;
+import bz.rxla.audioplayer.service.PlayerAdapter;
+import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -73,6 +75,15 @@ public class AudioplayerPlugin implements MethodCallHandler {
         }
     };
 
+    private BroadcastReceiver currentPositionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "currentPositionReceiver onReceive");
+            int time = intent.getIntExtra(MediaPlayerAdapter.CURRENT_POS_KEY, 0);
+            channel.invokeMethod("audio.onCurrentPosition", time);
+        }
+    };
+
     public static void registerWith(Registrar registrar) {
         final MethodChannel channel = new MethodChannel(registrar.messenger(), ID);
         channel.setMethodCallHandler(new AudioplayerPlugin(registrar, channel));
@@ -107,6 +118,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 LocalBroadcastManager.getInstance(context).registerReceiver(
                         skipPreviousReceiver, new IntentFilter(MusicService.SKIP_PREVIOUS_ACTION));
 
+                LocalBroadcastManager.getInstance(context).registerReceiver(
+                        currentPositionReceiver, new IntentFilter(MediaPlayerAdapter.CURRENT_POS_ACTION));
+
                 Log.d(TAG, "onActivityStarted");
             }
 
@@ -135,6 +149,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 LocalBroadcastManager.getInstance(context).unregisterReceiver(
                         skipPreviousReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        currentPositionReceiver);
 
                 Log.d(TAG, "onActivityStopped");
             }
@@ -279,12 +296,12 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     private void stop() {
         handler.removeCallbacks(sendData);
-        if (mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.release();
-            mediaPlayer = null;
-            channel.invokeMethod("audio.onStop", null);
-        }
+//        if (mediaPlayer != null) {
+//            mediaPlayer.stop();
+//            mediaPlayer.release();
+//            mediaPlayer = null;
+        channel.invokeMethod("audio.onStop", null);
+//        }
     }
 
     private void pause() {
@@ -372,17 +389,23 @@ public class AudioplayerPlugin implements MethodCallHandler {
             if (playbackState != null) {
                 switch (playbackState.getState()) {
                     case PlaybackStateCompat.STATE_PLAYING:
+                        Log.d(TAG, "STATE_PLAYING");
                         mIsPlaying = true;
                         channel.invokeMethod("audio.onStart", 0);
                         Log.d(TAG, "audio.onStart");
                         break;
                     case PlaybackStateCompat.STATE_PAUSED:
+                        Log.d(TAG, "STATE_PAUSED");
                         mIsPlaying = false;
                         channel.invokeMethod("audio.onPause", true);
                         Log.d(TAG, "audio.onPause");
                         break;
                     case PlaybackStateCompat.STATE_STOPPED:
+                        Log.d(TAG, "STATE_STOPPED");
                         mIsPlaying = false;
+                        stop();
+                        channel.invokeMethod("audio.onComplete", null);
+                        Log.d(TAG, "audio.onComplete");
                         break;
                 }
             }

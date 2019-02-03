@@ -17,9 +17,12 @@
 package bz.rxla.audioplayer.service.players;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
+import android.os.Handler;
 import android.os.SystemClock;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
@@ -36,6 +39,9 @@ import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
  */
 public final class MediaPlayerAdapter extends PlayerAdapter {
 
+    public static final String CURRENT_POS_ACTION = "CURRENT_POS_ACTION";
+    public static final String CURRENT_POS_KEY = "CURRENT_POS_KEY";
+
     private final Context mContext;
     private MediaPlayer mMediaPlayer;
     private String mFilename;
@@ -43,6 +49,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     private MediaMetadataCompat mCurrentMedia;
     private int mState;
     private boolean mCurrentMediaPlayedToCompletion;
+
+    private final Handler handler = new Handler();
 
     // Work-around for a MediaPlayer bug related to the behavior of MediaPlayer.seekTo()
     // while not playing.
@@ -210,7 +218,27 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         }
 
         play();
+
+        handler.post(sendData);
     }
+
+    private final Runnable sendData = new Runnable() {
+        public void run() {
+            try {
+                if (!isPlaying()) {
+                    handler.removeCallbacks(sendData);
+                }
+                int time = mMediaPlayer.getCurrentPosition();
+                Intent intent = new Intent(CURRENT_POS_ACTION);
+                intent.putExtra(CURRENT_POS_KEY, time);
+                LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+
+                handler.postDelayed(this, 500);
+            } catch (Exception e) {
+                Log.w("PlayerAdapter", "When running handler", e);
+            }
+        }
+    };
 
     @Override
     public void onStop() {
@@ -218,6 +246,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         // be updated, so that MediaNotificationManager can take down the notification.
         setNewState(PlaybackStateCompat.STATE_STOPPED);
         release();
+
+        handler.removeCallbacks(sendData);
     }
 
     private void release() {
@@ -273,9 +303,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         final PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder();
         stateBuilder.setActions(getAvailableActions());
         stateBuilder.setState(mState,
-                              reportPosition,
-                              1.0f,
-                              SystemClock.elapsedRealtime());
+                reportPosition,
+                1.0f,
+                SystemClock.elapsedRealtime());
         mPlaybackInfoListener.onPlaybackStateChange(stateBuilder.build());
     }
 
@@ -288,28 +318,28 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     @PlaybackStateCompat.Actions
     private long getAvailableActions() {
         long actions = PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-                       | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                       | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                       | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
+                | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
         switch (mState) {
             case PlaybackStateCompat.STATE_STOPPED:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_PAUSE;
+                        | PlaybackStateCompat.ACTION_PAUSE;
                 break;
             case PlaybackStateCompat.STATE_PLAYING:
                 actions |= PlaybackStateCompat.ACTION_STOP
-                           | PlaybackStateCompat.ACTION_PAUSE
-                           | PlaybackStateCompat.ACTION_SEEK_TO;
+                        | PlaybackStateCompat.ACTION_PAUSE
+                        | PlaybackStateCompat.ACTION_SEEK_TO;
                 break;
             case PlaybackStateCompat.STATE_PAUSED:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_STOP;
+                        | PlaybackStateCompat.ACTION_STOP;
                 break;
             default:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_PLAY_PAUSE
-                           | PlaybackStateCompat.ACTION_STOP
-                           | PlaybackStateCompat.ACTION_PAUSE;
+                        | PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        | PlaybackStateCompat.ACTION_STOP
+                        | PlaybackStateCompat.ACTION_PAUSE;
         }
         return actions;
     }
