@@ -40,6 +40,21 @@ public class MusicLibrary {
     private static final HashMap<String, Integer> albumRes = new HashMap<>();
     private static final HashMap<String, String> musicFileName = new HashMap<>();
 
+    private static MusicLibrary instance = new MusicLibrary();
+
+    public static MusicLibrary getInstance() {
+        return instance;
+    }
+
+    public MusicLibrary() {
+    }
+
+    private AudioInfo audioInfo = null;
+
+    public void setAudioInfo(AudioInfo audioInfo) {
+        this.audioInfo = audioInfo;
+    }
+
     static {
 //        createMediaMetadataCompat(
 //                "Jazz_In_Paris",
@@ -63,20 +78,20 @@ public class MusicLibrary {
 //                "the_coldest_shoulder.mp3",
 //                R.drawable.album_youtube_audio_library_rock_2,
 //                "album_youtube_audio_library_rock_2");
-        createMediaMetadataCompat(
-                "test_id",
-                "Test title",
-                "Test Artist",
-                "Test album",
-                "Rock",
-                160,
-                TimeUnit.SECONDS,
-                "http://www.rxlabz.com/labz/audio2.mp3",
-                R.drawable.album_youtube_audio_library_rock_2,
-                "album_youtube_audio_library_rock_2");
+//        createMediaMetadataCompat(
+//                "test_id",
+//                "Test title",
+//                "Test Artist",
+//                "Test album",
+//                "Rock",
+//                160,
+//                TimeUnit.SECONDS,
+//                "http://www.rxlabz.com/labz/audio2.mp3",
+//                R.drawable.album_youtube_audio_library_rock_2,
+//                "album_youtube_audio_library_rock_2");
     }
 
-    public static String getRoot() {
+    public String getRoot() {
         return "root";
     }
 
@@ -132,16 +147,27 @@ public class MusicLibrary {
         return builder.build();
     }
 
-    public static MediaMetadataCompat getMetadata(Context context, AudioInfo audioInfo) {
+    public MediaMetadataCompat getMetadata() {
         // Since MediaMetadataCompat is immutable, we need to create a copy to set the album art.
         // We don't set it initially on all items so that they don't take unnecessary memory.
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
 
-        builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, audioInfo.name);
-        builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, audioInfo.title);
-        builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name);
-        builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audioInfo.duration);
-        builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap);
+        if (audioInfo != null) {
+            builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, audioInfo.name)
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, audioInfo.title)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audioInfo.duration)
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap);
+        }
+
+//        return new MediaMetadataCompat.Builder()
+//                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "id")
+//                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, audioInfo.title)
+//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name)
+//                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
+//                        audioInfo.duration)
+//                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap)
+//                .build();
 
         return builder.build();
     }

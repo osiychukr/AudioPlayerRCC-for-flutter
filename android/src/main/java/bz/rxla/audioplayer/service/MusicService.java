@@ -21,11 +21,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.media.MediaBrowserCompat;
@@ -35,11 +33,6 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +64,10 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "setInfoReceiver onReceive");
-            audioInfo = intent.getParcelableExtra(AUDIO_INFO_KEY);
+//            audioInfo = intent.getParcelableExtra(AUDIO_INFO_KEY);
+            if (mPlayback != null && mPlayback.isPlaying()) {
+                ((MediaPlayerAdapter) mPlayback).setNewState(((MediaPlayerAdapter) mPlayback).mState);
+            }
         }
     };
 
@@ -121,7 +117,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     public BrowserRoot onGetRoot(@NonNull String clientPackageName,
                                  int clientUid,
                                  Bundle rootHints) {
-        return new BrowserRoot(MusicLibrary.getRoot(), null);
+        return new BrowserRoot(MusicLibrary.getInstance().getRoot(), null);
     }
 
     @Override
@@ -166,9 +162,9 @@ public class MusicService extends MediaBrowserServiceCompat {
 //                mSession.setActive(true);
 //            }
 
-            if (audioInfo == null) {
-                return;
-            }
+//            if (audioInfo == null) {
+//                return;
+//            }
 //            Glide.with(MusicService.this)
 //                    .asBitmap()
 //                    .load(audioInfo.imageUrl)
@@ -186,7 +182,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 //                    });
 
 //            audioInfo.bitmap = resource;
-            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, audioInfo);
+            mPreparedMedia = MusicLibrary.getInstance().getMetadata();
             mSession.setMetadata(mPreparedMedia);
 
             if (!mSession.isActive()) {
@@ -231,17 +227,20 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPause() {
+            Log.i(TAG, "onPause");
             mPlayback.pause();
         }
 
         @Override
         public void onStop() {
+            Log.i(TAG, "onStop");
             mPlayback.stop();
             mSession.setActive(false);
         }
 
         @Override
         public void onSkipToNext() {
+            Log.i(TAG, "onSkipToNext");
 //            mQueueIndex = (++mQueueIndex % mPlaylist.size());
 //            mPreparedMedia = null;
 //            onPlay();
@@ -253,6 +252,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSkipToPrevious() {
+            Log.i(TAG, "onSkipToPrevious");
 //            mQueueIndex = mQueueIndex > 0 ? mQueueIndex - 1 : mPlaylist.size() - 1;
 //            mPreparedMedia = null;
 //            onPlay();
@@ -264,6 +264,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSeekTo(long pos) {
+            Log.i(TAG, "onSeekTo");
             mPlayback.seekTo(pos);
         }
 
@@ -307,10 +308,14 @@ public class MusicService extends MediaBrowserServiceCompat {
 //                Notification notification =
 //                        mMediaNotificationManager.getNotification(
 //                                mPlayback.getCurrentMedia(), state, getSessionToken());
-                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
+//                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
+//                Notification notification =
+//                        mMediaNotificationManager.getNotification(
+//                                mData, state, getSessionToken());
+
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                MusicLibrary.getInstance().getMetadata(), state, getSessionToken());
 
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
@@ -327,10 +332,14 @@ public class MusicService extends MediaBrowserServiceCompat {
 //                Notification notification =
 //                        mMediaNotificationManager.getNotification(
 //                                mPlayback.getCurrentMedia(), state, getSessionToken());
-                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
+//                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
+//                Notification notification =
+//                        mMediaNotificationManager.getNotification(
+//                                mData, state, getSessionToken());
+
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                MusicLibrary.getInstance().getMetadata(), state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }

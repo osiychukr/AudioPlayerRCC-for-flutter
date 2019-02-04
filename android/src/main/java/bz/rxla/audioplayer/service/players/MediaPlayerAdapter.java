@@ -45,9 +45,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     private final Context mContext;
     private MediaPlayer mMediaPlayer;
     private String mFilename;
-    private PlaybackInfoListener mPlaybackInfoListener;
+    public PlaybackInfoListener mPlaybackInfoListener;
     private MediaMetadataCompat mCurrentMedia;
-    private int mState;
+    public int mState;
     private boolean mCurrentMediaPlayedToCompletion;
 
     private final Handler handler = new Handler();
@@ -92,8 +92,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     @Override
     public void playFromMedia(MediaMetadataCompat metadata) {
         mCurrentMedia = metadata;
-        final String mediaId = metadata.getDescription().getMediaId();
-        playFile(MusicLibrary.getMusicFilename(mediaId));
+//        final String mediaId = metadata.getDescription().getMediaId();
+//        playFile(MusicLibrary.getMusicFilename(mediaId));
     }
 
     // Implements PlaybackControl.
@@ -175,42 +175,6 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
             return;
         }
 
-//        mMediaPlayer.prepareAsync();
-
-//        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-//            @Override
-//            public void onPrepared(MediaPlayer mp) {
-//                mMediaPlayer.start();
-//                channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
-//            }
-//        });
-//
-//        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//            @Override
-//            public void onCompletion(MediaPlayer mp) {
-//                stop();
-//                channel.invokeMethod("audio.onComplete", null);
-//            }
-//        });
-//
-//        mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-//            @Override
-//            public boolean onError(MediaPlayer mp, int what, int extra) {
-//                channel.invokeMethod("audio.onError", String.format("{\"what\":%d,\"extra\":%d}", what, extra));
-//                return true;
-//            }
-//        });
-//
-//        try {
-//            AssetFileDescriptor assetFileDescriptor = mContext.getAssets().openFd(mFilename);
-//            mMediaPlayer.setDataSource(
-//                    assetFileDescriptor.getFileDescriptor(),
-//                    assetFileDescriptor.getStartOffset(),
-//                    assetFileDescriptor.getLength());
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to open file: " + mFilename, e);
-//        }
-
         try {
             mMediaPlayer.prepare();
         } catch (Exception e) {
@@ -282,7 +246,7 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     }
 
     // This is the main reducer for the player state machine.
-    private void setNewState(@PlaybackStateCompat.State int newPlayerState) {
+    public void setNewState(@PlaybackStateCompat.State int newPlayerState) {
         mState = newPlayerState;
 
         // Whether playback goes to completion, or whether it is stopped, the

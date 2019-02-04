@@ -35,6 +35,7 @@ import bz.rxla.audioplayer.client.MediaBrowserHelper;
 import bz.rxla.audioplayer.models.AudioInfo;
 import bz.rxla.audioplayer.service.MusicService;
 import bz.rxla.audioplayer.service.PlayerAdapter;
+import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
 import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -142,16 +143,16 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
             @Override
             public void onActivityStopped(Activity activity) {
-                mMediaBrowserHelper.onStop();
-
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        skipNextReceiver);
-
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        skipPreviousReceiver);
-
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        currentPositionReceiver);
+//                mMediaBrowserHelper.onStop();
+//
+//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+//                        skipNextReceiver);
+//
+//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+//                        skipPreviousReceiver);
+//
+//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+//                        currentPositionReceiver);
 
                 Log.d(TAG, "onActivityStopped");
             }
@@ -168,20 +169,32 @@ public class AudioplayerPlugin implements MethodCallHandler {
                         "onActivityDestroyed",
                         Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onActivityDestroyed");
+
+                mMediaBrowserHelper.onStop();
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        skipNextReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        skipPreviousReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        currentPositionReceiver);
             }
         });
     }
 
     private void setTestInfo() {
         audioInfo = new AudioInfo("name", "author", "https://wallpaperbrowse.com/media/images/3848765-wallpaper-images-download.jpg", 160);
-
         Glide.with(context)
                 .asBitmap()
                 .load(audioInfo.imageUrl)
-                .into(new SimpleTarget<Bitmap>(50, 50) {
+                .into(new SimpleTarget<Bitmap>(200, 200) {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         audioInfo.bitmap = resource;
+                        MusicLibrary.getInstance().setAudioInfo(audioInfo);
+
                         Intent intent = new Intent(MusicService.SET_INFO_ACTION);
                         intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
@@ -226,6 +239,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 String imageUrl = call.argument("imageUrl");
                 int duration = call.argument("duration");
                 audioInfo = new AudioInfo(name, author, imageUrl, duration);
+                MusicLibrary.getInstance().setAudioInfo(audioInfo);
 
                 Glide.with(context)
                         .asBitmap()
@@ -234,15 +248,18 @@ public class AudioplayerPlugin implements MethodCallHandler {
                             @Override
                             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                                 audioInfo.bitmap = resource;
+
+                                Log.d(TAG, "setInfo onResourceReady");
+                                MusicLibrary.getInstance().setAudioInfo(audioInfo);
                                 Intent intent = new Intent(MusicService.SET_INFO_ACTION);
-                                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
+//                                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                             }
                         });
 
-                Intent intent = new Intent(MusicService.SET_INFO_ACTION);
-                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+//                Intent intent = new Intent(MusicService.SET_INFO_ACTION);
+//                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
+//                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
                 Log.d(TAG, "setInfo " + author + name + imageUrl + duration);
 
