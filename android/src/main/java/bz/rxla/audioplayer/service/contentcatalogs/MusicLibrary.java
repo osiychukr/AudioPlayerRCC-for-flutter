@@ -113,13 +113,21 @@ public class MusicLibrary {
                 MusicLibrary.getAlbumRes(mediaId));
     }
 
-    public static List<MediaBrowserCompat.MediaItem> getMediaItems() {
+//    public static List<MediaBrowserCompat.MediaItem> getMediaItems() {
+//        List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
+//        for (MediaMetadataCompat metadata : music.values()) {
+//            result.add(
+//                    new MediaBrowserCompat.MediaItem(
+//                            metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+//        }
+//        return result;
+//    }
+
+    public List<MediaBrowserCompat.MediaItem> getMediaItems() {
         List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
-        for (MediaMetadataCompat metadata : music.values()) {
-            result.add(
-                    new MediaBrowserCompat.MediaItem(
-                            metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
-        }
+        result.add(
+                new MediaBrowserCompat.MediaItem(
+                        getMetadata().getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
         return result;
     }
 
@@ -152,6 +160,7 @@ public class MusicLibrary {
         // We don't set it initially on all items so that they don't take unnecessary memory.
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
 
+        builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "mediaID");
         if (audioInfo != null) {
             builder.putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, audioInfo.name)
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, audioInfo.title)
