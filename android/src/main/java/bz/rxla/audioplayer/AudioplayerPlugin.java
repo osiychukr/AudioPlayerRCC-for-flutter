@@ -7,12 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -28,7 +24,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 
-import java.io.IOException;
 import java.util.List;
 
 import bz.rxla.audioplayer.client.MediaBrowserHelper;
@@ -49,13 +44,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
     private static final String TAG = AudioplayerPlugin.class.getSimpleName();
 
     private final MethodChannel channel;
-    private final AudioManager am;
-    private final Handler handler = new Handler();
-    private MediaPlayer mediaPlayer;
     private Context context;
 
     private MediaBrowserHelper mMediaBrowserHelper;
-    private boolean mIsPlaying;
     private boolean needToSeek = false;
     private long seek = 0;
     private AudioInfo audioInfo = null;
@@ -112,7 +103,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
         this.channel = channel;
         channel.setMethodCallHandler(this);
         context = registrar.context().getApplicationContext();
-        this.am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         mMediaBrowserHelper = new MediaBrowserConnection(context);
         mMediaBrowserHelper.registerCallback(new MediaBrowserListener());
@@ -151,39 +141,21 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
             @Override
             public void onActivityResumed(Activity activity) {
-//                if (mIsPlaying) {
-//                    mMediaBrowserHelper.getTransportControls().pause();
-//                } else {
-//                    mMediaBrowserHelper.getTransportControls().play();
-//                }
                 Log.d(TAG, "onActivityResumed");
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
-
                 Log.d(TAG, "onActivityPaused");
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
-//                mMediaBrowserHelper.onStop();
-//
-//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-//                        skipNextReceiver);
-//
-//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-//                        skipPreviousReceiver);
-//
-//                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-//                        currentPositionReceiver);
-
                 Log.d(TAG, "onActivityStopped");
             }
 
             @Override
             public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
                 Log.d(TAG, "onActivitySaveInstanceState");
             }
 
@@ -240,25 +212,12 @@ public class AudioplayerPlugin implements MethodCallHandler {
         switch (method) {
             case "play":
                 Log.d(TAG, "play");
-//                play(call.argument("url").toString());
-
-//                if (mIsPlaying) {
-//                    mMediaBrowserHelper.getTransportControls().pause();
-//                } else {
-//                    mMediaBrowserHelper.getTransportControls().play();
-//                }
-
                 mMediaBrowserHelper.getTransportControls().playFromUri(Uri.parse(call.argument("url").toString()), null);
-
-
                 response.success(null);
                 break;
             case "pause":
                 Log.d(TAG, "pause");
-//                pause();
-
                 mMediaBrowserHelper.getTransportControls().pause();
-
                 response.success(null);
                 break;
             case "setInfo":
@@ -286,20 +245,13 @@ public class AudioplayerPlugin implements MethodCallHandler {
                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                             }
                         });
-
-//                Intent intent = new Intent(MusicService.SET_INFO_ACTION);
-//                intent.putExtra(MusicService.AUDIO_INFO_KEY, audioInfo);
-//                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-
                 Log.d(TAG, "setInfo " + author + name + imageUrl + duration);
-
                 response.success(null);
                 break;
             case "setPlaybackInfo":
                 int pos = call.argument("duration");
 
                 Log.d(TAG, "setPlaybackInfo " + pos);
-
                 response.success(null);
                 break;
             case "setDuration":
@@ -314,7 +266,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 break;
             case "seek":
                 double position = call.arguments();
-//                seek(position);
                 needToSeek = true;
                 seek = (long) (position * 1000);
                 mMediaBrowserHelper.getTransportControls().seekTo(seek);
@@ -322,106 +273,20 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 Log.d(TAG, "seek " + seek);
                 break;
-            case "mute":
-                Log.d(TAG, "mute");
-                Boolean muted = call.arguments();
-                mute(muted);
-                response.success(null);
-                break;
+//            case "mute":
+//                Log.d(TAG, "mute");
+//                Boolean muted = call.arguments();
+//                response.success(null);
+//                break;
             default:
                 response.notImplemented();
         }
     }
 
-    private void mute(Boolean muted) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, muted ? AudioManager.ADJUST_MUTE : AudioManager.ADJUST_UNMUTE, 0);
-        } else {
-            am.setStreamMute(AudioManager.STREAM_MUSIC, muted);
-        }
-    }
-
-    private void seek(double position) {
-        mediaPlayer.seekTo((int) (position * 1000));
-    }
 
     private void stop() {
-        handler.removeCallbacks(sendData);
-//        if (mediaPlayer != null) {
-//            mediaPlayer.stop();
-//            mediaPlayer.release();
-//            mediaPlayer = null;
         channel.invokeMethod("audio.onStop", null);
-//        }
     }
-
-    private void pause() {
-        handler.removeCallbacks(sendData);
-        if (mediaPlayer != null) {
-            mediaPlayer.pause();
-            channel.invokeMethod("audio.onPause", true);
-        }
-    }
-
-    private void play(String url) {
-        if (mediaPlayer == null) {
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-            try {
-                mediaPlayer.setDataSource(url);
-            } catch (IOException e) {
-                Log.w(ID, "Invalid DataSource", e);
-                channel.invokeMethod("audio.onError", "Invalid Datasource");
-                return;
-            }
-
-            mediaPlayer.prepareAsync();
-
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaPlayer.start();
-                    channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
-                }
-            });
-
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    stop();
-                    channel.invokeMethod("audio.onComplete", null);
-                }
-            });
-
-            mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    channel.invokeMethod("audio.onError", String.format("{\"what\":%d,\"extra\":%d}", what, extra));
-                    return true;
-                }
-            });
-        } else {
-            mediaPlayer.start();
-            channel.invokeMethod("audio.onStart", mediaPlayer.getDuration());
-        }
-        handler.post(sendData);
-    }
-
-    private final Runnable sendData = new Runnable() {
-        public void run() {
-            try {
-                if (!mediaPlayer.isPlaying()) {
-                    handler.removeCallbacks(sendData);
-                }
-                int time = mediaPlayer.getCurrentPosition();
-                channel.invokeMethod("audio.onCurrentPosition", time);
-                handler.postDelayed(this, 200);
-            } catch (Exception e) {
-                Log.w(ID, "When running handler", e);
-            }
-        }
-    };
 
     /**
      * Implementation of the {@link MediaControllerCompat.Callback} methods we're interested in.
@@ -435,13 +300,11 @@ public class AudioplayerPlugin implements MethodCallHandler {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
             Log.d(TAG, "onPlaybackStateChanged");
-//            mMediaControlsImage.setPressed(mIsPlaying);
 
             if (playbackState != null) {
                 switch (playbackState.getState()) {
                     case PlaybackStateCompat.STATE_PLAYING:
                         Log.d(TAG, "STATE_PLAYING");
-                        mIsPlaying = true;
                         channel.invokeMethod("audio.onStart", 0);
                         Log.d(TAG, "audio.onStart");
 
@@ -451,13 +314,11 @@ public class AudioplayerPlugin implements MethodCallHandler {
                         break;
                     case PlaybackStateCompat.STATE_PAUSED:
                         Log.d(TAG, "STATE_PAUSED");
-                        mIsPlaying = false;
                         channel.invokeMethod("audio.onPause", true);
                         Log.d(TAG, "audio.onPause");
                         break;
                     case PlaybackStateCompat.STATE_STOPPED:
                         Log.d(TAG, "STATE_STOPPED");
-                        mIsPlaying = false;
                         stop();
                         break;
                 }
@@ -471,13 +332,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
             if (mediaMetadata == null) {
                 return;
             }
-//            mTitleTextView.setText(
-//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
-//            mArtistTextView.setText(
-//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST));
-//            mAlbumArt.setImageBitmap(MusicLibrary.getAlbumBitmap(
-//                    context,
-//                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)));
         }
 
         @Override
@@ -507,7 +361,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
         @Override
         protected void onConnected(@NonNull MediaControllerCompat mediaController) {
-//            mSeekBarAudio.setMediaController(mediaController);
             Log.d(TAG, "onConnected");
 //            setTestInfo();
         }

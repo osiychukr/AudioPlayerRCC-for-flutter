@@ -20,7 +20,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -39,7 +38,6 @@ import android.util.Log;
 
 import bz.rxla.audioplayer.R;
 import bz.rxla.audioplayer.service.MusicService;
-import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
 
 
 /**
@@ -206,18 +204,8 @@ public class MediaNotificationManager {
     }
 
     private PendingIntent createContentIntent() {
-//        Intent openUI = new Intent(mService, MainActivity.class);
-        Intent openUI = mService.getPackageManager().getLaunchIntentForPackage("ua.com.essence.app");
-//        if (openUI != null) {
-//            startActivity(launchIntent);//null pointer check in case package name was not found
-//        }
-//        Intent openUI = new Intent(Intent.ACTION_MAIN);
-//        openUI.setComponent(new ComponentName("ua.com.essence.app","ua.com.essence.app.MainActivity"));
-        if (openUI != null) {
-            openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        } else {
-            openUI = new Intent("ua.com.essence.app");
-        }
+        Intent openUI = new Intent("club.esens.app");
+
         return PendingIntent.getActivity(
                 mService, REQUEST_CODE, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
     }

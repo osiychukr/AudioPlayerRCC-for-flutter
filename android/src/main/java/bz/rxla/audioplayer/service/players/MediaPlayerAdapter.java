@@ -29,9 +29,9 @@ import android.util.Log;
 
 import java.io.IOException;
 
+import bz.rxla.audioplayer.service.MusicService;
 import bz.rxla.audioplayer.service.PlaybackInfoListener;
 import bz.rxla.audioplayer.service.PlayerAdapter;
-import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
 
 /**
  * Exposes the functionality of the {@link MediaPlayer} and implements the {@link PlayerAdapter}
@@ -46,9 +46,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     private final Context mContext;
     private MediaPlayer mMediaPlayer;
     private String mFilename;
-    public PlaybackInfoListener mPlaybackInfoListener;
+    private PlaybackInfoListener mPlaybackInfoListener;
     private MediaMetadataCompat mCurrentMedia;
-    public int mState;
+    private int mState;
     private boolean mCurrentMediaPlayedToCompletion;
 
     private final Handler handler = new Handler();
@@ -248,7 +248,8 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
 
     // This is the main reducer for the player state machine.
     public void setNewState(@PlaybackStateCompat.State int newPlayerState) {
-        mState = newPlayerState;
+        if (newPlayerState != MusicService.UPDATE_IMAGE_STATE)
+            mState = newPlayerState;
 
         // Whether playback goes to completion, or whether it is stopped, the
         // mCurrentMediaPlayedToCompletion is set to true.
@@ -261,7 +262,7 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         if (mSeekWhileNotPlaying >= 0) {
             reportPosition = mSeekWhileNotPlaying;
 
-            if (mState == PlaybackStateCompat.STATE_PLAYING) {
+            if (mState == PlaybackStateCompat.STATE_PLAYING || mState == MusicService.UPDATE_IMAGE_STATE) {
                 mSeekWhileNotPlaying = -1;
             }
         } else {

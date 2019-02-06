@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -37,7 +38,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-import bz.rxla.audioplayer.models.AudioInfo;
 import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
 import bz.rxla.audioplayer.service.notifications.MediaNotificationManager;
 import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
@@ -51,12 +51,14 @@ public class MusicService extends MediaBrowserServiceCompat {
     public static final String SET_INFO_ACTION = "SET_INFO_ACTION";
     public static final String AUDIO_INFO_KEY = "AUDIO_INFO_KEY";
     public static final String ON_COMPLETE_ACTION = "ON_COMPLETE_ACTION";
+    public static final int UPDATE_IMAGE_STATE = -12;
 
     private MediaSessionCompat mSession;
     private PlayerAdapter mPlayback;
     private MediaNotificationManager mMediaNotificationManager;
     private MediaSessionCallback mCallback;
     private boolean mServiceInStartedState;
+    private boolean needToUpdate = false;
     private Uri uri = null;
 
 
@@ -64,8 +66,8 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "setInfoReceiver onReceive");
-            if (mPlayback != null && mPlayback.isPlaying()) {
-//                ((MediaPlayerAdapter) mPlayback).setNewState(((MediaPlayerAdapter) mPlayback).mState);
+            if (mPlayback != null && mPlayback.isPlaying() && needToUpdate) {
+                ((MediaPlayerAdapter) mPlayback).setNewState(UPDATE_IMAGE_STATE);
             }
         }
     };
@@ -148,39 +150,6 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPrepare() {
-//            if (mQueueIndex < 0 && mPlaylist.isEmpty()) {
-//                // Nothing to play.
-//                return;
-//            }
-//
-//            final String mediaId = mPlaylist.get(mQueueIndex).getDescription().getMediaId();
-//            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
-//            mSession.setMetadata(mPreparedMedia);
-//
-//            if (!mSession.isActive()) {
-//                mSession.setActive(true);
-//            }
-
-//            if (audioInfo == null) {
-//                return;
-//            }
-//            Glide.with(MusicService.this)
-//                    .asBitmap()
-//                    .load(audioInfo.imageUrl)
-//                    .into(new SimpleTarget<Bitmap>(50, 50) {
-//                        @Override
-//                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-//                            audioInfo.bitmap = resource;
-//                            mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, audioInfo);
-//                            mSession.setMetadata(mPreparedMedia);
-//
-//                            if (!mSession.isActive()) {
-//                                mSession.setActive(true);
-//                            }
-//                        }
-//                    });
-
-//            audioInfo.bitmap = resource;
             mPreparedMedia = MusicLibrary.getInstance().getMetadata();
             mSession.setMetadata(mPreparedMedia);
 
@@ -199,7 +168,6 @@ public class MusicService extends MediaBrowserServiceCompat {
             if (mPreparedMedia == null) {
                 onPrepare();
             }
-//
 //            mPlayback.playFromMedia(mPreparedMedia);
 
             if (uri != null) {
@@ -240,21 +208,14 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onSkipToNext() {
             Log.i(TAG, "onSkipToNext");
-//            mQueueIndex = (++mQueueIndex % mPlaylist.size());
-//            mPreparedMedia = null;
-//            onPlay();
 
             Intent intent = new Intent(SKIP_NEXT_ACTION);
-//            intent.putExtra(SKIP_NEXT_ACTION, args[0].toString());
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         }
 
         @Override
         public void onSkipToPrevious() {
             Log.i(TAG, "onSkipToPrevious");
-//            mQueueIndex = mQueueIndex > 0 ? mQueueIndex - 1 : mPlaylist.size() - 1;
-//            mPreparedMedia = null;
-//            onPlay();
 
             Intent intent = new Intent(SKIP_PREVIOUS_ACTION);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
@@ -311,17 +272,10 @@ public class MusicService extends MediaBrowserServiceCompat {
         class ServiceManager {
 
             private void moveServiceToStartedState(PlaybackStateCompat state) {
-//                Notification notification =
-//                        mMediaNotificationManager.getNotification(
-//                                mPlayback.getCurrentMedia(), state, getSessionToken());
-//                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
-//                Notification notification =
-//                        mMediaNotificationManager.getNotification(
-//                                mData, state, getSessionToken());
-
+                MediaMetadataCompat metadata = MusicLibrary.getInstance().getMetadata();
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                MusicLibrary.getInstance().getMetadata(), state, getSessionToken());
+                                metadata, state, getSessionToken());
 
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
@@ -331,18 +285,12 @@ public class MusicService extends MediaBrowserServiceCompat {
                 }
 
                 startForeground(MediaNotificationManager.NOTIFICATION_ID, notification);
+
+                needToUpdate = metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART) == null;
             }
 
             private void updateNotificationForPause(PlaybackStateCompat state) {
                 stopForeground(false);
-//                Notification notification =
-//                        mMediaNotificationManager.getNotification(
-//                                mPlayback.getCurrentMedia(), state, getSessionToken());
-//                MediaMetadataCompat mData = MusicLibrary.getMetadata(MusicService.this, "test_id");
-//                Notification notification =
-//                        mMediaNotificationManager.getNotification(
-//                                mData, state, getSessionToken());
-
                 Notification notification =
                         mMediaNotificationManager.getNotification(
                                 MusicLibrary.getInstance().getMetadata(), state, getSessionToken());

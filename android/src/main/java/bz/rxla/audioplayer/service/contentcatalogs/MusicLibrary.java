@@ -55,42 +55,6 @@ public class MusicLibrary {
         this.audioInfo = audioInfo;
     }
 
-    static {
-//        createMediaMetadataCompat(
-//                "Jazz_In_Paris",
-//                "Jazz in Paris",
-//                "Media Right Productions",
-//                "Jazz & Blues",
-//                "Jazz",
-//                103,
-//                TimeUnit.SECONDS,
-//                "jazz_in_paris.mp3",
-//                R.drawable.album_jazz_blues,
-//                "album_jazz_blues");
-//        createMediaMetadataCompat(
-//                "The_Coldest_Shoulder",
-//                "The Coldest Shoulder",
-//                "The 126ers",
-//                "Youtube Audio Library Rock 2",
-//                "Rock",
-//                160,
-//                TimeUnit.SECONDS,
-//                "the_coldest_shoulder.mp3",
-//                R.drawable.album_youtube_audio_library_rock_2,
-//                "album_youtube_audio_library_rock_2");
-//        createMediaMetadataCompat(
-//                "test_id",
-//                "Test title",
-//                "Test Artist",
-//                "Test album",
-//                "Rock",
-//                160,
-//                TimeUnit.SECONDS,
-//                "http://www.rxlabz.com/labz/audio2.mp3",
-//                R.drawable.album_youtube_audio_library_rock_2,
-//                "album_youtube_audio_library_rock_2");
-    }
-
     public String getRoot() {
         return "root";
     }
@@ -112,16 +76,6 @@ public class MusicLibrary {
         return BitmapFactory.decodeResource(context.getResources(),
                 MusicLibrary.getAlbumRes(mediaId));
     }
-
-//    public static List<MediaBrowserCompat.MediaItem> getMediaItems() {
-//        List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
-//        for (MediaMetadataCompat metadata : music.values()) {
-//            result.add(
-//                    new MediaBrowserCompat.MediaItem(
-//                            metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
-//        }
-//        return result;
-//    }
 
     public List<MediaBrowserCompat.MediaItem> getMediaItems() {
         List<MediaBrowserCompat.MediaItem> result = new ArrayList<>();
@@ -168,15 +122,6 @@ public class MusicLibrary {
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audioInfo.duration)
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap);
         }
-
-//        return new MediaMetadataCompat.Builder()
-//                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "id")
-//                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, audioInfo.title)
-//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name)
-//                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
-//                        audioInfo.duration)
-//                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap)
-//                .build();
 
         return builder.build();
     }
