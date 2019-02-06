@@ -39,6 +39,7 @@ import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
  */
 public final class MediaPlayerAdapter extends PlayerAdapter {
 
+    public static final String SEEK_ACTION = "SEEK_ACTION";
     public static final String CURRENT_POS_ACTION = "CURRENT_POS_ACTION";
     public static final String CURRENT_POS_KEY = "CURRENT_POS_KEY";
 
@@ -318,6 +319,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
                 mSeekWhileNotPlaying = (int) position;
             }
             mMediaPlayer.seekTo((int) position);
+
+            Intent intent = new Intent(SEEK_ACTION);
+            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
 
             // Set the state (to the current state) because the position changed and should
             // be reported to clients.

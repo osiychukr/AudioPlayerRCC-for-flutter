@@ -34,7 +34,6 @@ import java.util.List;
 import bz.rxla.audioplayer.client.MediaBrowserHelper;
 import bz.rxla.audioplayer.models.AudioInfo;
 import bz.rxla.audioplayer.service.MusicService;
-import bz.rxla.audioplayer.service.PlayerAdapter;
 import bz.rxla.audioplayer.service.contentcatalogs.MusicLibrary;
 import bz.rxla.audioplayer.service.players.MediaPlayerAdapter;
 import io.flutter.plugin.common.MethodCall;
@@ -57,6 +56,8 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     private MediaBrowserHelper mMediaBrowserHelper;
     private boolean mIsPlaying;
+    private boolean needToSeek = false;
+    private long seek = 0;
     private AudioInfo audioInfo = null;
 
     private BroadcastReceiver skipNextReceiver = new BroadcastReceiver() {
@@ -82,6 +83,23 @@ public class AudioplayerPlugin implements MethodCallHandler {
             Log.d(TAG, "currentPositionReceiver onReceive");
             int time = intent.getIntExtra(MediaPlayerAdapter.CURRENT_POS_KEY, 0);
             channel.invokeMethod("audio.onCurrentPosition", time);
+        }
+    };
+
+    private BroadcastReceiver onCompleteReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onCompleteReceiver onReceive");
+            channel.invokeMethod("audio.onComplete", null);
+        }
+    };
+
+    private BroadcastReceiver onSeekReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onSeekReceiver onReceive");
+            needToSeek = false;
+            seek = 0;
         }
     };
 
@@ -121,6 +139,12 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 LocalBroadcastManager.getInstance(context).registerReceiver(
                         currentPositionReceiver, new IntentFilter(MediaPlayerAdapter.CURRENT_POS_ACTION));
+
+                LocalBroadcastManager.getInstance(context).registerReceiver(
+                        onSeekReceiver, new IntentFilter(MediaPlayerAdapter.SEEK_ACTION));
+
+                LocalBroadcastManager.getInstance(context).registerReceiver(
+                        onCompleteReceiver, new IntentFilter(MusicService.ON_COMPLETE_ACTION));
 
                 Log.d(TAG, "onActivityStarted");
             }
@@ -180,6 +204,12 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 LocalBroadcastManager.getInstance(context).unregisterReceiver(
                         currentPositionReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        onCompleteReceiver);
+
+                LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                        onSeekReceiver);
             }
         });
     }
@@ -266,7 +296,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 response.success(null);
                 break;
             case "setPlaybackInfo":
-                Log.d(TAG, "setPlaybackInfo");
+                int pos = call.argument("duration");
+
+                Log.d(TAG, "setPlaybackInfo " + pos);
 
                 response.success(null);
                 break;
@@ -281,12 +313,14 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 response.success(null);
                 break;
             case "seek":
-                Log.d(TAG, "seek");
                 double position = call.arguments();
 //                seek(position);
-
-                mMediaBrowserHelper.getTransportControls().seekTo((int) (position * 1000));
+                needToSeek = true;
+                seek = (long) (position * 1000);
+                mMediaBrowserHelper.getTransportControls().seekTo(seek);
                 response.success(null);
+
+                Log.d(TAG, "seek " + seek);
                 break;
             case "mute":
                 Log.d(TAG, "mute");
@@ -410,6 +444,10 @@ public class AudioplayerPlugin implements MethodCallHandler {
                         mIsPlaying = true;
                         channel.invokeMethod("audio.onStart", 0);
                         Log.d(TAG, "audio.onStart");
+
+                        if (needToSeek) {
+                            mMediaBrowserHelper.getTransportControls().seekTo(seek);
+                        }
                         break;
                     case PlaybackStateCompat.STATE_PAUSED:
                         Log.d(TAG, "STATE_PAUSED");
@@ -421,8 +459,6 @@ public class AudioplayerPlugin implements MethodCallHandler {
                         Log.d(TAG, "STATE_STOPPED");
                         mIsPlaying = false;
                         stop();
-                        channel.invokeMethod("audio.onComplete", null);
-                        Log.d(TAG, "audio.onComplete");
                         break;
                 }
             }

@@ -48,8 +48,9 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     public static final String SKIP_NEXT_ACTION = "SKIP_NEXT_ACTION";
     public static final String SKIP_PREVIOUS_ACTION = "SKIP_PREVIOUS_ACTION";
-    public static final String SET_INFO_ACTION = "SKIP_PREVIOUS_ACTION";
+    public static final String SET_INFO_ACTION = "SET_INFO_ACTION";
     public static final String AUDIO_INFO_KEY = "AUDIO_INFO_KEY";
+    public static final String ON_COMPLETE_ACTION = "ON_COMPLETE_ACTION";
 
     private MediaSessionCompat mSession;
     private PlayerAdapter mPlayback;
@@ -58,15 +59,13 @@ public class MusicService extends MediaBrowserServiceCompat {
     private boolean mServiceInStartedState;
     private Uri uri = null;
 
-    private AudioInfo audioInfo = null;
 
     private BroadcastReceiver setInfoReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "setInfoReceiver onReceive");
-//            audioInfo = intent.getParcelableExtra(AUDIO_INFO_KEY);
             if (mPlayback != null && mPlayback.isPlaying()) {
-                ((MediaPlayerAdapter) mPlayback).setNewState(((MediaPlayerAdapter) mPlayback).mState);
+//                ((MediaPlayerAdapter) mPlayback).setNewState(((MediaPlayerAdapter) mPlayback).mState);
             }
         }
     };
@@ -124,7 +123,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     public void onLoadChildren(
             @NonNull final String parentMediaId,
             @NonNull final Result<List<MediaBrowserCompat.MediaItem>> result) {
-        result.sendResult(MusicLibrary.getMediaItems());
+        result.sendResult(MusicLibrary.getInstance().getMediaItems());
     }
 
     // MediaSession Callback: Transport Controls -> MediaPlayerAdapter
@@ -300,6 +299,13 @@ public class MusicService extends MediaBrowserServiceCompat {
                     mServiceManager.moveServiceOutOfStartedState(state);
                     break;
             }
+        }
+
+        @Override
+        public void onPlaybackCompleted() {
+            super.onPlaybackCompleted();
+            Intent intent = new Intent(ON_COMPLETE_ACTION);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         }
 
         class ServiceManager {
