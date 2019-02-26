@@ -41,6 +41,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
  */
 public class AudioplayerPlugin implements MethodCallHandler {
     private static final String ID = "bz.rxla.flutter/audio";
+    private static final String MAIN_ACTIVITY_NAME = "ua.com.essence.app.MainActivity";
     private static final String TAG = AudioplayerPlugin.class.getSimpleName();
 
     private final MethodChannel channel;
@@ -110,33 +111,35 @@ public class AudioplayerPlugin implements MethodCallHandler {
         ((Application) context.getApplicationContext()).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-                Toast.makeText(context,
-                        "onActivityCreated",
-                        Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context,
+//                        "onActivityCreated " + activity.getLocalClassName(),
+//                        Toast.LENGTH_SHORT).show();
 
-                Log.d(TAG, "onActivityCreated");
+                Log.d(TAG, "onActivityCreated " + activity.getLocalClassName());
             }
 
             @Override
             public void onActivityStarted(Activity activity) {
-                mMediaBrowserHelper.onStart();
+                if (activity.getLocalClassName().equals(MAIN_ACTIVITY_NAME)) {
+                    mMediaBrowserHelper.onStart();
 
-                LocalBroadcastManager.getInstance(context).registerReceiver(
-                        skipNextReceiver, new IntentFilter(MusicService.SKIP_NEXT_ACTION));
+                    LocalBroadcastManager.getInstance(context).registerReceiver(
+                            skipNextReceiver, new IntentFilter(MusicService.SKIP_NEXT_ACTION));
 
-                LocalBroadcastManager.getInstance(context).registerReceiver(
-                        skipPreviousReceiver, new IntentFilter(MusicService.SKIP_PREVIOUS_ACTION));
+                    LocalBroadcastManager.getInstance(context).registerReceiver(
+                            skipPreviousReceiver, new IntentFilter(MusicService.SKIP_PREVIOUS_ACTION));
 
-                LocalBroadcastManager.getInstance(context).registerReceiver(
-                        currentPositionReceiver, new IntentFilter(MediaPlayerAdapter.CURRENT_POS_ACTION));
+                    LocalBroadcastManager.getInstance(context).registerReceiver(
+                            currentPositionReceiver, new IntentFilter(MediaPlayerAdapter.CURRENT_POS_ACTION));
 
-                LocalBroadcastManager.getInstance(context).registerReceiver(
-                        onSeekReceiver, new IntentFilter(MediaPlayerAdapter.SEEK_ACTION));
+                    LocalBroadcastManager.getInstance(context).registerReceiver(
+                            onSeekReceiver, new IntentFilter(MediaPlayerAdapter.SEEK_ACTION));
 
-                LocalBroadcastManager.getInstance(context).registerReceiver(
-                        onCompleteReceiver, new IntentFilter(MusicService.ON_COMPLETE_ACTION));
+                    LocalBroadcastManager.getInstance(context).registerReceiver(
+                            onCompleteReceiver, new IntentFilter(MusicService.ON_COMPLETE_ACTION));
+                }
 
-                Log.d(TAG, "onActivityStarted");
+                Log.d(TAG, "onActivityStarted " + activity.getLocalClassName());
             }
 
             @Override
@@ -151,7 +154,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
             @Override
             public void onActivityStopped(Activity activity) {
-                Log.d(TAG, "onActivityStopped");
+                Log.d(TAG, "onActivityStopped " + activity.getLocalClassName());
             }
 
             @Override
@@ -161,27 +164,29 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
             @Override
             public void onActivityDestroyed(Activity activity) {
-                Toast.makeText(context,
-                        "onActivityDestroyed",
-                        Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "onActivityDestroyed");
+//                Toast.makeText(context,
+//                        "onActivityDestroyed " + activity.getLocalClassName(),
+//                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "onActivityDestroyed " + activity.getLocalClassName());
 
-                mMediaBrowserHelper.onStop();
+                if (activity.getLocalClassName().equals(MAIN_ACTIVITY_NAME)) {
+                    mMediaBrowserHelper.onStop();
 
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        skipNextReceiver);
+                    LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                            skipNextReceiver);
 
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        skipPreviousReceiver);
+                    LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                            skipPreviousReceiver);
 
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        currentPositionReceiver);
+                    LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                            currentPositionReceiver);
 
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        onCompleteReceiver);
+                    LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                            onCompleteReceiver);
 
-                LocalBroadcastManager.getInstance(context).unregisterReceiver(
-                        onSeekReceiver);
+                    LocalBroadcastManager.getInstance(context).unregisterReceiver(
+                            onSeekReceiver);
+                }
             }
         });
     }
