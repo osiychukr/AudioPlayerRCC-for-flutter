@@ -65,6 +65,9 @@ class AudioPlayer {
   /// Stop the currently playing stream.
   Future<void> stop() async => await _channel.invokeMethod('stop');
 
+  /// Stop the player and hide notification.
+  Future<void> destroy() async => await _channel.invokeMethod('destroy');
+
   /// Mute sound.
   Future<void> mute(bool muted) async => await _channel.invokeMethod('mute', muted);
 

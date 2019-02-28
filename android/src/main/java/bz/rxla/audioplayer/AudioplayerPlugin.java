@@ -18,7 +18,6 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -278,14 +277,18 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
                 Log.d(TAG, "seek " + seek);
                 break;
-//            case "mute":
-//                Log.d(TAG, "mute");
-//                Boolean muted = call.arguments();
-//                response.success(null);
-//                break;
+            case "destroy":
+                Log.d(TAG, "destroy");
+                stopPlayer();
+                response.success(null);
+                break;
             default:
                 response.notImplemented();
         }
+    }
+
+    private void stopPlayer() {
+        mMediaBrowserHelper.getTransportControls().stop();
     }
 
 
