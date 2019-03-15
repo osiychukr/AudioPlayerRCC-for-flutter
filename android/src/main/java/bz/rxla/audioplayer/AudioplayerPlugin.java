@@ -48,6 +48,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
     private MediaBrowserHelper mMediaBrowserHelper;
     private boolean needToSeek = false;
+    private boolean isFirstStart = true;
     private long seek = 0;
     private AudioInfo audioInfo = null;
 
@@ -119,7 +120,9 @@ public class AudioplayerPlugin implements MethodCallHandler {
 
             @Override
             public void onActivityStarted(Activity activity) {
-                if (activity.getLocalClassName().equals(MAIN_ACTIVITY_NAME)) {
+                if (activity.getLocalClassName().equals(MAIN_ACTIVITY_NAME) && isFirstStart) {
+
+                    isFirstStart = false;
                     mMediaBrowserHelper.onStart();
 
                     LocalBroadcastManager.getInstance(context).registerReceiver(
