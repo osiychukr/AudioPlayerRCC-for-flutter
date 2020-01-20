@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,6 +83,7 @@ public class MusicLibrary {
         result.add(
                 new MediaBrowserCompat.MediaItem(
                         getMetadata().getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
+        Log.i("MusicLibrary", result.toString());
         return result;
     }
 
@@ -121,6 +123,12 @@ public class MusicLibrary {
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audioInfo.name)
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audioInfo.duration)
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, audioInfo.bitmap);
+
+
+            Log.i("getMetadata", "METADATA_KEY_TITLE - " + audioInfo.title);
+            Log.i("getMetadata", "METADATA_KEY_ARTIST - " + audioInfo.name);
+        } else {
+            Log.i("getMetadata", "audioInfo - null");
         }
 
         return builder.build();
