@@ -179,7 +179,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         try {
             mMediaPlayer.prepare();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open file: " + mFilename, e);
+            e.printStackTrace();
+            return;
+//            throw new RuntimeException("Failed to open file: " + mFilename, e);
         }
 
         play();
