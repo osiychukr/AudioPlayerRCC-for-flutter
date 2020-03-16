@@ -10,6 +10,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media.MediaBrowserServiceCompat;
+
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -357,7 +359,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
     }
 
     /**
-     * Customize the connection to our {@link android.support.v4.media.MediaBrowserServiceCompat}
+     * Customize the connection to our {@link MediaBrowserServiceCompat}
      * and implement our app specific desires.
      */
     class MediaBrowserConnection extends MediaBrowserHelper {

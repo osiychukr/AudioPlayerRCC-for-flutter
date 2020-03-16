@@ -24,6 +24,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import android.support.v4.media.MediaDescriptionCompat;
@@ -171,6 +173,7 @@ public class MediaNotificationManager {
         return builder;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void createChannel() {
         if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null) {
             // The user-visible name of the channel.
@@ -200,10 +203,9 @@ public class MediaNotificationManager {
     }
 
     private PendingIntent createContentIntent() {
-        Intent openUI = new Intent("club.esens.app");
-
+        Intent launchIntent = mService.getPackageManager().getLaunchIntentForPackage("club.esens.app");
         return PendingIntent.getActivity(
-                mService, REQUEST_CODE, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
+                mService, REQUEST_CODE, launchIntent, PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
 }
