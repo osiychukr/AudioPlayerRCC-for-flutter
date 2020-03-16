@@ -9,9 +9,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -200,7 +198,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
                 .load(audioInfo.imageUrl)
                 .into(new SimpleTarget<Bitmap>(200, 200) {
                     @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                    public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                         audioInfo.bitmap = resource;
                         MusicLibrary.getInstance().setAudioInfo(audioInfo);
 
@@ -242,7 +240,7 @@ public class AudioplayerPlugin implements MethodCallHandler {
                         .load(audioInfo.imageUrl)
                         .into(new SimpleTarget<Bitmap>((int) Utils.toDp(100, context), (int) Utils.toDp(100, context)) {
                             @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
                                 audioInfo.bitmap = resource;
 
                                 Log.d(TAG, "setInfo onResourceReady");
@@ -371,14 +369,14 @@ public class AudioplayerPlugin implements MethodCallHandler {
         }
 
         @Override
-        protected void onConnected(@NonNull MediaControllerCompat mediaController) {
+        protected void onConnected(MediaControllerCompat mediaController) {
             Log.d(TAG, "onConnected");
 //            setTestInfo();
         }
 
         @Override
-        protected void onChildrenLoaded(@NonNull String parentId,
-                                        @NonNull List<MediaBrowserCompat.MediaItem> children) {
+        protected void onChildrenLoaded(String parentId,
+                                        List<MediaBrowserCompat.MediaItem> children) {
             super.onChildrenLoaded(parentId, children);
             Log.d(TAG, "onChildrenLoaded");
 

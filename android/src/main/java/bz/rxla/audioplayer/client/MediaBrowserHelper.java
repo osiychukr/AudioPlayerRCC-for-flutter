@@ -3,10 +3,8 @@ package bz.rxla.audioplayer.client;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.RemoteException;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaBrowserServiceCompat;
+import androidx.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaControllerCompat.Callback;
@@ -35,7 +33,6 @@ public class MediaBrowserHelper {
 
     private MediaBrowserCompat mMediaBrowser;
 
-    @Nullable
     private MediaControllerCompat mMediaController;
 
     public MediaBrowserHelper(Context context,
@@ -82,7 +79,7 @@ public class MediaBrowserHelper {
      * @param mediaController {@link MediaControllerCompat} associated with the connected
      *                        MediaSession.
      */
-    protected void onConnected(@NonNull MediaControllerCompat mediaController) {
+    protected void onConnected(MediaControllerCompat mediaController) {
     }
 
     /**
@@ -91,8 +88,8 @@ public class MediaBrowserHelper {
      * @param parentId The media ID of the parent item.
      * @param children List (possibly empty) of child items.
      */
-    protected void onChildrenLoaded(@NonNull String parentId,
-                                    @NonNull List<MediaBrowserCompat.MediaItem> children) {
+    protected void onChildrenLoaded(String parentId,
+                                    List<MediaBrowserCompat.MediaItem> children) {
     }
 
     /**
@@ -101,7 +98,6 @@ public class MediaBrowserHelper {
     protected void onDisconnected() {
     }
 
-    @NonNull
     protected final MediaControllerCompat getMediaController() {
         if (mMediaController == null) {
             throw new IllegalStateException("MediaController is null!");
@@ -116,7 +112,7 @@ public class MediaBrowserHelper {
     private void resetState() {
         performOnAllCallbacks(new CallbackCommand() {
             @Override
-            public void perform(@NonNull Callback callback) {
+            public void perform(Callback callback) {
                 callback.onPlaybackStateChanged(null);
             }
         });
@@ -150,7 +146,7 @@ public class MediaBrowserHelper {
         }
     }
 
-    private void performOnAllCallbacks(@NonNull CallbackCommand command) {
+    private void performOnAllCallbacks(CallbackCommand command) {
         for (Callback callback : mCallbackList) {
             if (callback != null) {
                 command.perform(callback);
@@ -162,7 +158,7 @@ public class MediaBrowserHelper {
      * Helper for more easily performing operations on all listening clients.
      */
     private interface CallbackCommand {
-        void perform(@NonNull Callback callback);
+        void perform(Callback callback);
     }
 
     // Receives callbacks from the MediaBrowser when it has successfully connected to the
@@ -198,8 +194,8 @@ public class MediaBrowserHelper {
     public class MediaBrowserSubscriptionCallback extends MediaBrowserCompat.SubscriptionCallback {
 
         @Override
-        public void onChildrenLoaded(@NonNull String parentId,
-                                     @NonNull List<MediaBrowserCompat.MediaItem> children) {
+        public void onChildrenLoaded(String parentId,
+                                     List<MediaBrowserCompat.MediaItem> children) {
             MediaBrowserHelper.this.onChildrenLoaded(parentId, children);
         }
     }
@@ -212,17 +208,17 @@ public class MediaBrowserHelper {
         public void onMetadataChanged(final MediaMetadataCompat metadata) {
             performOnAllCallbacks(new CallbackCommand() {
                 @Override
-                public void perform(@NonNull Callback callback) {
+                public void perform(Callback callback) {
                     callback.onMetadataChanged(metadata);
                 }
             });
         }
 
         @Override
-        public void onPlaybackStateChanged(@Nullable final PlaybackStateCompat state) {
+        public void onPlaybackStateChanged(final PlaybackStateCompat state) {
             performOnAllCallbacks(new CallbackCommand() {
                 @Override
-                public void perform(@NonNull Callback callback) {
+                public void perform(Callback callback) {
                     callback.onPlaybackStateChanged(state);
                 }
             });

@@ -24,14 +24,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.app.NotificationCompat.MediaStyle;
-import android.support.v4.media.session.MediaButtonReceiver;
+import androidx.media.app.NotificationCompat.MediaStyle;
+import androidx.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
@@ -109,7 +107,7 @@ public class MediaNotificationManager {
     }
 
     public Notification getNotification(MediaMetadataCompat metadata,
-                                        @NonNull PlaybackStateCompat state,
+                                        PlaybackStateCompat state,
                                         MediaSessionCompat.Token token) {
         boolean isPlaying = state.getState() == PlaybackStateCompat.STATE_PLAYING;
 //        MediaDescriptionCompat description = metadata.getDescription();
@@ -118,7 +116,7 @@ public class MediaNotificationManager {
         return builder.build();
     }
 
-    private NotificationCompat.Builder buildNotification(@NonNull PlaybackStateCompat state,
+    private NotificationCompat.Builder buildNotification(PlaybackStateCompat state,
                                                          MediaSessionCompat.Token token,
                                                          boolean isPlaying,
                                                          MediaMetadataCompat metadata) {
@@ -173,8 +171,6 @@ public class MediaNotificationManager {
         return builder;
     }
 
-    // Does nothing on versions of Android earlier than O.
-    @RequiresApi(Build.VERSION_CODES.O)
     private void createChannel() {
         if (mNotificationManager.getNotificationChannel(CHANNEL_ID) == null) {
             // The user-visible name of the channel.

@@ -24,11 +24,11 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaBrowserServiceCompat;
+import androidx.media.MediaBrowserServiceCompat;
+
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -115,7 +115,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     }
 
     @Override
-    public BrowserRoot onGetRoot(@NonNull String clientPackageName,
+    public BrowserRoot onGetRoot(String clientPackageName,
                                  int clientUid,
                                  Bundle rootHints) {
         return new BrowserRoot(MusicLibrary.getInstance().getRoot(), null);
@@ -123,8 +123,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     @Override
     public void onLoadChildren(
-            @NonNull final String parentMediaId,
-            @NonNull final Result<List<MediaBrowserCompat.MediaItem>> result) {
+            final String parentMediaId,
+            final Result<List<MediaBrowserCompat.MediaItem>> result) {
         result.sendResult(MusicLibrary.getInstance().getMediaItems());
     }
 

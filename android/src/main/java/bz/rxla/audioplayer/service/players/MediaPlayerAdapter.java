@@ -22,7 +22,7 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
@@ -179,7 +179,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         try {
             mMediaPlayer.prepare();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open file: " + mFilename, e);
+            e.printStackTrace();
+            return;
+//            throw new RuntimeException("Failed to open file: " + mFilename, e);
         }
 
         play();
