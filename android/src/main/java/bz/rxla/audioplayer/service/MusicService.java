@@ -77,7 +77,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         super.onCreate();
 
         // Create a new MediaSession.
-        mSession = new MediaSessionCompat(this, "MusicService");
+        mSession = new MediaSessionCompat(this, TAG);
         mCallback = new MediaSessionCallback();
         mSession.setCallback(mCallback);
         mSession.setFlags(
@@ -151,19 +151,22 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPrepare() {
             mPreparedMedia = MusicLibrary.getInstance().getMetadata();
+
+            Log.i(TAG, "onPrepare");
             mSession.setMetadata(mPreparedMedia);
 
-            if (!mSession.isActive()) {
-                mSession.setActive(true);
-            }
+
         }
 
         @Override
         public void onPlay() {
+
             if (!isReadyToPlay()) {
                 // Nothing to play.
                 return;
             }
+
+            Log.d(TAG, "onPlay");
 
             if (mPreparedMedia == null) {
                 onPrepare();
@@ -187,7 +190,9 @@ public class MusicService extends MediaBrowserServiceCompat {
             if (mPreparedMedia == null) {
                 onPrepare();
             }
-
+            if (!mSession.isActive()) {
+                mSession.setActive(true);
+            }
             mPlayback.playFromUrl(uri.toString(), mPreparedMedia);
             Log.d(TAG, "onPlayFromUri: MediaSession active - " + uri.toString());
         }
@@ -272,7 +277,11 @@ public class MusicService extends MediaBrowserServiceCompat {
         class ServiceManager {
 
             private void moveServiceToStartedState(PlaybackStateCompat state) {
+
+                Log.i(TAG, "moveServiceToStartedState");
+
                 MediaMetadataCompat metadata = MusicLibrary.getInstance().getMetadata();
+                mSession.setMetadata(metadata);
                 Notification notification =
                         mMediaNotificationManager.getNotification(
                                 metadata, state, getSessionToken());
@@ -290,10 +299,13 @@ public class MusicService extends MediaBrowserServiceCompat {
             }
 
             private void updateNotificationForPause(PlaybackStateCompat state) {
+                Log.i(TAG, "updateNotificationForPause");
                 stopForeground(false);
+                MediaMetadataCompat metadata = MusicLibrary.getInstance().getMetadata();
+                mSession.setMetadata(metadata);
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                MusicLibrary.getInstance().getMetadata(), state, getSessionToken());
+                                metadata, state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }
